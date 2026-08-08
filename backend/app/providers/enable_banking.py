@@ -58,6 +58,11 @@ TRANSACTION_PAGE_LIMIT = 50  # safety cap
 TERMINAL_SESSION_STATUSES = frozenset(
     {"EXPIRED", "REVOKED", "CLOSED", "CANCELLED", "INVALID"}
 )
+# HTTP read timeout for EB calls. EB proxies synchronously to the ASPSP, and
+# some banks (notably Iberian ones) take well over 30s to answer balance/session
+# reads, tripping a ReadTimeout that surfaced as 0.00 balances and spurious
+# reconnect prompts. 90s gives slow ASPSPs room while staying bounded.
+HTTP_TIMEOUT_SECONDS = 90.0
 
 
 def _map_cash_account_type(eb_type: Optional[str]) -> str:
@@ -107,6 +112,35 @@ def _pick_balance(balances: list[dict]) -> Optional[dict]:
         if key in by_type:
             return by_type[key]
     return balances[0] if isinstance(balances[0], dict) else None
+
+
+def _card_balance(
+    balances: list[dict],
+) -> tuple[Optional[Decimal], Optional[Decimal], Optional[str]]:
+    """Derive ``(owed, credit_limit, currency)`` for a credit card from EB balances.
+
+    A card's balances come back as ITAV (interim *available* credit) and OTHR
+    (the *authorised* line, i.e. the limit), while the closing-booked balance
+    CLBD is typically 0 between statements. ``_pick_balance`` prefers CLBD, so a
+    used card reads as fully paid — 0 owed, whole limit free (observed with the
+    ActivoBank VISA reporting €0 against a €5000 line that actually had ~€1795
+    outstanding). Amount owed = authorised limit − interim available.
+
+    Returns ``(None, None, None)`` when the card doesn't expose both types, so
+    the caller falls back to the generic ``_pick_balance`` path.
+    """
+    by_type = {
+        (b.get("balance_type") or b.get("type")): b
+        for b in balances
+        if isinstance(b, dict)
+    }
+    available = by_type.get("ITAV")
+    limit = by_type.get("OTHR")
+    if available is None or limit is None:
+        return None, None, None
+    limit_amount = _balance_decimal(limit)
+    owed = limit_amount - _balance_decimal(available)
+    return owed, limit_amount, _balance_currency(limit, "EUR")
 
 
 def _balance_decimal(balance: Optional[dict]) -> Decimal:
@@ -303,7 +337,7 @@ class EnableBankingProvider(BankProvider):
                 "Content-Type": "application/json",
                 "User-Agent": "Securo/0.1 (+https://usesecuro.com)",
             },
-            timeout=30.0,
+            timeout=HTTP_TIMEOUT_SECONDS,
         )
 
     async def _request(
@@ -506,13 +540,25 @@ class EnableBankingProvider(BankProvider):
     ) -> AccountData:
         uid = raw.get("uid") or raw.get("account_uid") or ""
         currency = raw.get("currency") or "EUR"
+        account_type = _map_cash_account_type(raw.get("cash_account_type"))
         # EB doesn't include balances in the session payload; fetch separately.
         balance = Decimal("0")
+        credit_limit: Optional[Decimal] = None
         try:
             bal_resp = await self._request("GET", f"/accounts/{uid}/balances")
-            picked = _pick_balance(bal_resp.get("balances") or [])
-            balance = _balance_decimal(picked)
-            currency = _balance_currency(picked, currency)
+            balances = bal_resp.get("balances") or []
+            owed = card_limit = None
+            if account_type == "credit_card":
+                # Cards report available (ITAV) + authorised limit (OTHR); the
+                # generic closing-booked pick would read 0 owed on a used card.
+                owed, card_limit, card_currency = _card_balance(balances)
+                if owed is not None:
+                    balance, credit_limit = owed, card_limit
+                    currency = card_currency or currency
+            if owed is None:
+                picked = _pick_balance(balances)
+                balance = _balance_decimal(picked)
+                currency = _balance_currency(picked, currency)
         except (httpx.HTTPError, SessionExpiredError) as exc:
             logger.warning(
                 "Failed to fetch balances for account %s: %s", uid, exc
@@ -526,9 +572,10 @@ class EnableBankingProvider(BankProvider):
         return AccountData(
             external_id=uid,
             name=name,
-            type=_map_cash_account_type(raw.get("cash_account_type")),
+            type=account_type,
             balance=balance,
             currency=currency,
+            credit_limit=credit_limit,
             masked_number=mask_last4(_account_identifier(raw)),
             # From the session payload: `uid` is scoped to one session, this
             # hash is what lets a later session find the same account again.
@@ -726,9 +773,19 @@ class EnableBankingProvider(BankProvider):
         txn_type = "debit" if indicator == "DBIT" else "credit"
         amount = amount.copy_abs()
         currency = amount_obj.get("currency") or "EUR"
+        # `transaction_date` is when the operation actually occurred (e.g. a card
+        # purchase); `booking_date` is when the bank posted it; `value_date` is
+        # the interest/settlement date. Most ASPSPs leave transaction_date empty
+        # and booking_date is the date the user expects. But some (e.g.
+        # ActivoBank credit cards) stamp every entry's booking_date with the
+        # statement/import date and carry the real date only in transaction_date,
+        # which would otherwise collapse a whole statement onto a single day.
+        # Prefer the occurrence date when the ASPSP provides it, then booking,
+        # then value.
+        occurrence = _parse_iso_date(raw.get("transaction_date"))
         booking = _parse_iso_date(raw.get("booking_date"))
         value = _parse_iso_date(raw.get("value_date"))
-        txn_date = booking or value or _parse_iso_date(raw.get("transaction_date"))
+        txn_date = occurrence or booking or value
         if not txn_date:
             return None
         additional_value = raw.get("additional_information")

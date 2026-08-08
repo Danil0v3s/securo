@@ -27,6 +27,7 @@ from app.providers.enable_banking import (
     FALLBACK_HISTORY_DAYS,
     EnableBankingProvider,
     _account_identifier,
+    _card_balance,
     _map_cash_account_type,
     _txn_fingerprint,
 )
@@ -145,6 +146,73 @@ def test_txn_fingerprint_uses_counterparty_name_when_iban_is_missing():
     }
     other = {**base, "creditor": {"name": "Bakery"}}
     assert _txn_fingerprint("acc", base) != _txn_fingerprint("acc", other)
+
+
+# ----- transaction date resolution (issue: ActivoBank card dates) -----
+
+
+def test_build_transaction_prefers_transaction_date_over_booking():
+    """ActivoBank cards stamp every entry's booking_date with the statement date
+    and put the real purchase date in transaction_date. We must not collapse a
+    whole statement onto the booking day."""
+    provider = EnableBankingProvider()
+    raw = {
+        "transaction_amount": {"amount": "112.42", "currency": "EUR"},
+        "credit_debit_indicator": "DBIT",
+        "booking_date": "2026-08-08",   # statement/import date
+        "value_date": None,
+        "transaction_date": "2026-05-11",  # the real purchase date
+        "remittance_information": ["COMPRA 6466 WWW.AMAZON"],
+    }
+    txn = provider._build_transaction("acc-uid", raw, "posted", "auto")
+    assert txn is not None
+    assert txn.date == date(2026, 5, 11)
+
+
+def test_build_transaction_falls_back_to_booking_then_value():
+    provider = EnableBankingProvider()
+    # No transaction_date → booking_date is used (unchanged behaviour).
+    booking_only = {
+        "transaction_amount": {"amount": "5.00", "currency": "EUR"},
+        "credit_debit_indicator": "CRDT",
+        "booking_date": "2026-08-01",
+    }
+    assert provider._build_transaction("a", booking_only, "posted", "auto").date == date(2026, 8, 1)
+
+    # Neither transaction_date nor booking_date → value_date is the last resort.
+    value_only = {
+        "transaction_amount": {"amount": "5.00", "currency": "EUR"},
+        "credit_debit_indicator": "CRDT",
+        "value_date": "2026-07-30",
+    }
+    assert provider._build_transaction("a", value_only, "posted", "auto").date == date(2026, 7, 30)
+
+
+# ----- credit-card balance derivation (issue: card shows full limit free) -----
+
+
+def test_card_balance_derives_owed_from_authorised_minus_available():
+    """A used card reports available (ITAV) + authorised limit (OTHR) while
+    closing-booked (CLBD) is 0. Owed = limit − available, not 0."""
+    balances = [
+        {"balance_type": "ITAV", "balance_amount": {"amount": "3204.21", "currency": "EUR"}},
+        {"balance_type": "OTHR", "balance_amount": {"amount": "5000", "currency": "EUR"}},
+        {"balance_type": "CLBD", "balance_amount": {"amount": "0", "currency": "EUR"}},
+    ]
+    owed, limit, currency = _card_balance(balances)
+    assert owed == Decimal("1795.79")
+    assert limit == Decimal("5000")
+    assert currency == "EUR"
+
+
+def test_card_balance_returns_none_without_both_types():
+    """Without both ITAV and OTHR we can't derive owed → caller falls back to
+    the generic balance pick."""
+    only_closing = [
+        {"balance_type": "CLBD", "balance_amount": {"amount": "0", "currency": "EUR"}},
+    ]
+    assert _card_balance(only_closing) == (None, None, None)
+    assert _card_balance([]) == (None, None, None)
 
 
 # ----- HTTP-driven parsing via httpx.MockTransport -----
