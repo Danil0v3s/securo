@@ -301,10 +301,11 @@ def _build_holding_data(inv: dict) -> HoldingData:
 
     # A fully withdrawn position reports zero (or absent) balance and
     # quantity. When the status is TOTAL_WITHDRAWAL but the same payload
-    # still carries a positive balance or quantity, the status is stale or
-    # transient and the position still holds value, so it must not be
-    # marked as sold (issue #819).
-    position_has_value = current_value > 0 or (quantity is not None and quantity > 0)
+    # still carries a nonzero balance or quantity, the status is stale or
+    # transient and the position is still open, so it must not be marked
+    # as sold (issue #819). Negative figures count as open too: hiding them
+    # would drop a real balance from the user's view.
+    position_has_value = current_value != 0 or (quantity is not None and quantity != 0)
     is_withdrawn = pluggy_status == "TOTAL_WITHDRAWAL" and not position_has_value
 
     return HoldingData(

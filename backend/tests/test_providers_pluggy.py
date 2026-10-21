@@ -732,6 +732,19 @@ def test_holding_total_withdrawal_with_only_positive_quantity_is_not_withdrawn()
     assert holding.current_value == Decimal("0")
 
 
+def test_holding_total_withdrawal_with_negative_balance_is_not_withdrawn():
+    """A nonzero balance means the position is not empty, even when it is
+    negative; it must not be hidden as sold."""
+    from app.providers.pluggy import _build_holding_data
+
+    holding = _build_holding_data(_investment(
+        status="TOTAL_WITHDRAWAL", balance=-12.5, quantity=0,
+    ))
+
+    assert holding.is_withdrawn is False
+    assert holding.current_value == Decimal("-12.5")
+
+
 def test_holding_total_withdrawal_empty_position_is_withdrawn():
     """A genuinely closed position reports zero balance and zero quantity;
     that one must still be marked withdrawn."""
