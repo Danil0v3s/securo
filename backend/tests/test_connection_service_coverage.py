@@ -630,7 +630,7 @@ async def test_sync_rematches_legacy_account_by_masked_number(
 ):
     """Rows predating `stable_external_id` must survive a reauth too.
 
-    A user whose bank was failing never had a stable_external_id backfilled — the sync
+    A user whose bank was failing never had a stable_external_id backfilled; the sync
     that would have done it is the one that was failing. When the bank recovers
     after a reconnect the uid is new and the hash is unknown to us, so the
     masked identifier is the last thing that still identifies the account.

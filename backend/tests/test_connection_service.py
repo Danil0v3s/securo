@@ -1181,7 +1181,7 @@ async def test_find_existing_connected_account_masked_fallback_skips_rows_with_a
     When a persisted account's details request is skipped (partial provider
     failure) and a *different* account surfaces with the same masked number and
     currency, the fallback would rebind the skipped row and overwrite its stable
-    id — mixing two account histories. Rows that already carry a stable id are
+    id, mixing two account histories. Rows that already carry a stable id are
     identified, so they must be out of scope for the fallback.
     """
     conn = await _make_connection(session, test_user.id, "MaskedBank")

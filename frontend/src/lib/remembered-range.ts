@@ -32,7 +32,7 @@ function write(page: RememberedPage, value: unknown): void {
   }
 }
 
-/** '' (open end) or a real calendar date as YYYY-MM-DD — not "2026-02-30". */
+/** '' (open end) or a real calendar date as YYYY-MM-DD, not "2026-02-30". */
 function isDate(v: unknown): v is string {
   if (v === '') return true
   if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false

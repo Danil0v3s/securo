@@ -1332,8 +1332,8 @@ async def _find_existing_connected_account(
 
     # The provider re-keyed this account. Enable Banking issues a `uid` scoped to
     # one session, so reauthorising changes it while `stable_external_id` (the
-    # identification_hash) survives. Rebind the existing row — keeping its
-    # transactions, rules and name overrides — instead of inserting a duplicate.
+    # identification_hash) survives. Rebind the existing row, keeping its
+    # transactions, rules and name overrides, instead of inserting a duplicate.
     # EB does not guarantee the hash is unique, so require exactly one unclaimed
     # candidate: a row another incoming account already took in this run carries
     # an external_id that is in the batch, and adopting it a second time would
@@ -1355,11 +1355,11 @@ async def _find_existing_connected_account(
             return stable_rows[0]
 
     # Last resort for rows that predate `stable_external_id` (added by migration
-    # 097, and only ever backfilled by a *successful* sync — which a user whose
+    # 097, and only ever backfilled by a *successful* sync, which a user whose
     # bank was failing never had). The masked identifier is the closest thing to
     # an account number we keep. Two guards, both fail-closed: a single candidate
     # (a shared last-4 must never merge two accounts), and candidates limited to
-    # rows with no stable id — a row that is already identified is a different
+    # rows with no stable id: a row that is already identified is a different
     # account, so adopting it would overwrite its identity and mix histories.
     if connection.provider == "enable_banking" and acc_data.masked_number:
         masked_rows = (await session.execute(

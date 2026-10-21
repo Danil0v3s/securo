@@ -525,7 +525,7 @@ export default function AccountDetailPage() {
       const params = {
         account_id: id,
         // When the active cycle is a real bill, prefer bill_id (Pluggy's
-        // truth — picks up charges the bank rolled outside the nominal date
+        // truth: picks up charges the bank rolled outside the nominal date
         // range) AND keep from/to so manual / non-bill-linked txs (recurring
         // fills, CSV imports) bucketed into this cycle still show up.
         bill_id: activeBill?.id,
