@@ -246,18 +246,43 @@ def _sync_assets_enabled(settings: Optional[dict]) -> bool:
     return (settings or {}).get("sync_assets", True) is not False
 
 
-def _account_balance(acc_data: AccountData, assets_enabled: bool) -> Decimal:
+def _account_balance(acc_data: AccountData, holdings_counted: bool) -> Decimal:
     """Balance to store for a synced account.
 
     Some banks auto-apply idle cash to an investment and the provider reports
     that money both inside the account balance and as a holding (issue #843).
-    The holding only becomes an asset when the connection imports holdings,
-    so the invested portion leaves the account balance only in that case;
-    with asset sync off the account keeps the full reported balance.
+    The invested portion leaves the account balance only when this sync
+    actually counts a holding for it; with asset sync off, a failed or empty
+    investments fetch, the account keeps the full reported balance so the
+    money is never dropped from net worth.
     """
-    if not assets_enabled or acc_data.auto_invested_balance <= 0:
+    if not holdings_counted or acc_data.auto_invested_balance <= 0:
         return acc_data.balance
     return acc_data.balance - acc_data.auto_invested_balance
+
+
+async def _fetch_holdings(
+    connection: BankConnection, credentials: dict
+) -> Optional[list[HoldingData]]:
+    """Fetch the connection's holdings, or None when the provider call fails.
+
+    Provider-side failures are tolerated (not every connector exposes
+    investment data, and a brokerage hiccup must not break the bank-account
+    sync), so they are logged and reported as None.
+    """
+    try:
+        provider = get_provider(connection.provider)
+        return await provider.get_holdings(credentials)
+    except Exception:  # noqa: BLE001
+        logger.exception(
+            "Failed to fetch holdings for connection %s", connection.id
+        )
+        return None
+
+
+def _holdings_counted(holdings: Optional[list[HoldingData]]) -> bool:
+    """Whether a holdings payload will leave at least one live asset."""
+    return bool(holdings) and any(not h.is_withdrawn for h in holdings)
 
 
 async def _sync_holdings(
@@ -265,8 +290,12 @@ async def _sync_holdings(
     user_id: uuid.UUID,
     connection: BankConnection,
     credentials: dict,
+    holdings: Optional[list[HoldingData]] = None,
 ) -> None:
     """Fetch investment holdings from the provider and upsert them as Assets.
+
+    ``holdings`` lets a caller pass a payload it already fetched with
+    ``_fetch_holdings``; when omitted the provider is called here.
 
     Each holding becomes one Asset (type="investment") keyed by
     (workspace_id, source, external_id). Every sync appends an AssetValue row
@@ -281,18 +310,10 @@ async def _sync_holdings(
     investment data, and we don't want a brokerage hiccup to break the
     bank-account sync that just succeeded.
     """
-    # Tolerate provider-side failures (e.g. Pluggy returning 500 for a
-    # specific connector, a bank that doesn't expose /investments).
-    # Storage errors below are intentionally not caught — they indicate
-    # a schema/invariant bug we want to surface, not a hiccup to swallow.
-    try:
-        provider = get_provider(connection.provider)
-        holdings = await provider.get_holdings(credentials)
-    except Exception:  # noqa: BLE001
-        logger.exception(
-            "Failed to fetch holdings for connection %s", connection.id
-        )
-        return
+    if holdings is None:
+        holdings = await _fetch_holdings(connection, credentials)
+        if holdings is None:
+            return
 
     source = connection.provider
     today = app_today()
@@ -1121,6 +1142,13 @@ async def handle_oauth_callback(
 
     use_provider_cats = await admin_service.use_provider_categories(session)
 
+    # Holdings are fetched before the accounts so each account balance knows
+    # whether its auto-invested portion is counted as an asset (issue #843).
+    holdings: Optional[list[HoldingData]] = None
+    if _sync_assets_enabled(connection.settings):
+        holdings = await _fetch_holdings(connection, connection_data.credentials)
+    holdings_counted = _holdings_counted(holdings)
+
     institution_cache: dict[str, Institution] = {}
     for acc_data in connection_data.accounts:
         is_cc = acc_data.type == "credit_card"
@@ -1136,9 +1164,7 @@ async def handle_oauth_callback(
             display_name=institution.name if institution else None,
             masked_number=acc_data.masked_number,
             type=acc_data.type,
-            balance=_account_balance(
-                acc_data, _sync_assets_enabled(connection.settings)
-            ),
+            balance=_account_balance(acc_data, holdings_counted),
             currency=acc_data.currency,
             credit_limit=acc_data.credit_limit if is_cc else None,
             statement_close_day=acc_data.statement_close_day if is_cc else None,
@@ -1301,10 +1327,13 @@ async def handle_oauth_callback(
         await reconciliation_service.match_incoming(session, workspace_id, landed)
 
     # Investment holdings live on /investments — separate endpoint from
-    # /accounts. Pulled after account setup when enabled so holdings are
-    # available on the Assets page immediately after the widget closes.
-    if _sync_assets_enabled(connection.settings):
-        await _sync_holdings(session, user_id, connection, connection_data.credentials)
+    # /accounts. Fetched before the account loop and stored here once the
+    # accounts exist, so holdings are available on the Assets page
+    # immediately after the widget closes.
+    if holdings is not None:
+        await _sync_holdings(
+            session, user_id, connection, connection_data.credentials, holdings
+        )
 
     connection.last_sync_at = datetime.now(timezone.utc)
     await session.commit()
@@ -2083,6 +2112,13 @@ async def sync_connection(
             for acc in accounts_data
             if acc.institution_external_id
         )
+        # Holdings are fetched before the accounts so each account balance
+        # knows whether its auto-invested portion is counted as an asset
+        # (issue #843).
+        holdings: Optional[list[HoldingData]] = None
+        if _sync_assets_enabled(conn_settings):
+            holdings = await _fetch_holdings(connection, credentials)
+        holdings_counted = _holdings_counted(holdings)
         institution_cache: dict[str, Institution] = {}
         for acc_data in accounts_data:
             institution = await _resolve_institution(
@@ -2137,7 +2173,7 @@ async def sync_connection(
                 account.balance = _simplefin_to_internal_balance(
                     connection.provider,
                     account.type,
-                    _account_balance(acc_data, _sync_assets_enabled(conn_settings)),
+                    _account_balance(acc_data, holdings_counted),
                 )
                 account.name = acc_data.name
                 # Backfills existing accounts on their next sync. Only written
@@ -2193,9 +2229,7 @@ async def sync_connection(
                     display_name=institution.name if institution else None,
                     masked_number=acc_data.masked_number,
                     type=acc_data.type,
-                    balance=_account_balance(
-                        acc_data, _sync_assets_enabled(conn_settings)
-                    ),
+                    balance=_account_balance(acc_data, holdings_counted),
                     currency=acc_data.currency,
                     credit_limit=acc_data.credit_limit if is_cc else None,
                     statement_close_day=acc_data.statement_close_day if is_cc else None,
@@ -2536,8 +2570,8 @@ async def sync_connection(
         # etc.) when enabled for this connection. Errors here are logged but
         # don't fail the sync; a bank connector that doesn't expose
         # /investments shouldn't block the transaction sync that just succeeded.
-        if _sync_assets_enabled(conn_settings):
-            await _sync_holdings(session, user_id, connection, credentials)
+        if holdings is not None:
+            await _sync_holdings(session, user_id, connection, credentials, holdings)
 
         # Reap institution rows referenced by nothing. Id-carrying servers
         # never orphan a row (renames update in place), but a name-only

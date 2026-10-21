@@ -2631,31 +2631,46 @@ async def test_sync_connection_imports_holdings_by_default(
     assert asset.connection_id == conn.id
 
 
-async def _sync_auto_invested_account(session, test_user, test_workspace, settings):
+_AUTO_INVEST_HOLDING = HoldingData(
+    external_id="auto-inv-holding-1", name="Auto Invest Fund",
+    currency="BRL", current_value=Decimal("400"),
+)
+
+
+def _auto_invested_account_data() -> AccountData:
+    return AccountData(
+        external_id="auto-inv-acc-1", name="Checking",
+        type="checking", balance=Decimal("1000"), currency="BRL",
+        auto_invested_balance=Decimal("400"),
+    )
+
+
+def _holdings_mock(holdings) -> AsyncMock:
+    if isinstance(holdings, Exception):
+        return AsyncMock(side_effect=holdings)
+    return AsyncMock(return_value=holdings)
+
+
+async def _sync_auto_invested_account(
+    session, test_user, test_workspace, settings, holdings=None, conn=None,
+):
     """Sync one checking account whose balance of 1000 includes 400 that the
-    bank auto-applied to an investment also reported as a holding."""
+    bank auto-applied to an investment, reported as ``holdings`` (defaults to
+    one matching holding; an exception makes the holdings fetch fail)."""
     from app.models.account import Account
 
-    conn = await _make_connection(
-        session, test_user.id, "Auto Invest Bank", settings=settings,
-    )
+    if conn is None:
+        conn = await _make_connection(
+            session, test_user.id, "Auto Invest Bank", settings=settings,
+        )
     mock_provider = AsyncMock()
     mock_provider.refresh_credentials = AsyncMock(return_value={"token": "t"})
     mock_provider.get_institution_logo = AsyncMock(return_value=None)
-    mock_provider.get_accounts = AsyncMock(return_value=[
-        AccountData(
-            external_id="auto-inv-acc-1", name="Checking",
-            type="checking", balance=Decimal("1000"), currency="BRL",
-            auto_invested_balance=Decimal("400"),
-        ),
-    ])
+    mock_provider.get_accounts = AsyncMock(return_value=[_auto_invested_account_data()])
     mock_provider.get_transactions = AsyncMock(return_value=[])
-    mock_provider.get_holdings = AsyncMock(return_value=[
-        HoldingData(
-            external_id="auto-inv-holding-1", name="Auto Invest Fund",
-            currency="BRL", current_value=Decimal("400"),
-        ),
-    ])
+    mock_provider.get_holdings = _holdings_mock(
+        [_AUTO_INVEST_HOLDING] if holdings is None else holdings
+    )
 
     with patch("app.services.connection_service.get_provider", return_value=mock_provider), \
          patch("app.services.connection_service.detect_transfer_pairs", new_callable=AsyncMock), \
@@ -2705,6 +2720,114 @@ async def test_sync_connection_keeps_gross_balance_when_asset_sync_disabled(
     provider.get_holdings.assert_not_awaited()
     assert account.balance == Decimal("1000")
     assert (await session.execute(select(Asset))).scalars().all() == []
+
+
+@pytest.mark.asyncio
+async def test_sync_connection_keeps_gross_balance_when_holdings_empty(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: an empty investments payload creates no asset, so the
+    account keeps the full balance, and a prior holding is still archived."""
+    first, _ = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None,
+    )
+    assert first.balance == Decimal("600")
+    conn = await session.get(BankConnection, first.connection_id)
+
+    account, provider = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None, holdings=[], conn=conn,
+    )
+
+    provider.get_holdings.assert_awaited_once()
+    await session.refresh(account)
+    assert account.balance == Decimal("1000")
+    asset = (
+        await session.execute(
+            select(Asset).where(Asset.external_id == "auto-inv-holding-1")
+        )
+    ).scalar_one()
+    assert asset.is_archived is True
+
+
+@pytest.mark.asyncio
+async def test_sync_connection_keeps_gross_balance_when_only_withdrawn_holdings(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: a payload with only closed positions counts no asset, so
+    nothing is deducted from the account."""
+    withdrawn = HoldingData(
+        external_id="auto-inv-holding-1", name="Auto Invest Fund",
+        currency="BRL", current_value=Decimal("0"), is_withdrawn=True,
+    )
+    account, _ = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None, holdings=[withdrawn],
+    )
+
+    assert account.balance == Decimal("1000")
+    assert (await session.execute(select(Asset))).scalars().all() == []
+
+
+@pytest.mark.asyncio
+async def test_sync_connection_keeps_gross_balance_when_holdings_fetch_fails(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: a failed investments fetch must not drop the auto-invested
+    money; the account keeps the full balance and the sync still succeeds."""
+    account, provider = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None,
+        holdings=RuntimeError("investments unavailable"),
+    )
+
+    provider.get_holdings.assert_awaited_once()
+    assert account.balance == Decimal("1000")
+    assert (await session.execute(select(Asset))).scalars().all() == []
+
+
+async def _oauth_auto_invested_account(session, test_workspace, test_user, holdings):
+    from app.models.account import Account
+
+    mock_provider = AsyncMock()
+    mock_provider.handle_oauth_callback = AsyncMock(return_value=ConnectionData(
+        external_id="ext-auto-invest",
+        institution_name="Auto Invest Bank",
+        credentials={"token": "x"},
+        accounts=[_auto_invested_account_data()],
+    ))
+    mock_provider.get_transactions = AsyncMock(return_value=[])
+    mock_provider.get_holdings = _holdings_mock(holdings)
+
+    with patch("app.services.connection_service.get_provider", return_value=mock_provider), \
+         patch("app.services.connection_service.detect_transfer_pairs", new_callable=AsyncMock):
+        await handle_oauth_callback(
+            session, test_workspace.id, test_user.id, "code", "pluggy",
+        )
+
+    return (
+        await session.execute(
+            select(Account).where(Account.external_id == "auto-inv-acc-1")
+        )
+    ).scalar_one()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("holdings", "expected"),
+    [
+        ([_AUTO_INVEST_HOLDING], Decimal("600")),
+        ([], Decimal("1000")),
+        (RuntimeError("investments unavailable"), Decimal("1000")),
+    ],
+    ids=["holdings", "empty", "fetch-fails"],
+)
+async def test_oauth_callback_deducts_auto_invested_only_when_holding_counted(
+    session: AsyncSession, test_user, test_workspace, holdings, expected
+):
+    """Issue #843: the first import applies the same rule as a later sync."""
+    account = await _oauth_auto_invested_account(
+        session, test_workspace, test_user, holdings,
+    )
+
+    assert account.balance == expected
 
 
 @pytest.mark.asyncio
