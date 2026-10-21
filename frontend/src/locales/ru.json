@@ -949,6 +949,7 @@
     "searchPlaceholder": "Поиск транзакций...",
     "clearFilters": "Сбросить фильтры",
     "exportCsv": "Экспорт CSV",
+    "refresh": "Обновить",
     "exportSelected": "Экспортировать выбранные ({{count}})",
     "exporting": "Экспорт...",
     "exportSuccess": "Транзакции успешно экспортированы",

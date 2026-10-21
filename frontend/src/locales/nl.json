@@ -941,6 +941,7 @@
     "searchPlaceholder": "Transacties zoeken...",
     "clearFilters": "Filters wissen",
     "exportCsv": "CSV exporteren",
+    "refresh": "Vernieuwen",
     "exportSelected": "Geselecteerde export ({{count}})",
     "exporting": "Exporteren...",
     "exportSuccess": "Transacties zijn succesvol geëxporteerd",

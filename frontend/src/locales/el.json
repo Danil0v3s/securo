@@ -1126,6 +1126,7 @@
     "searchPlaceholder": "Αναζήτηση συναλλαγών...",
     "clearFilters": "Εκκαθάριση φίλτρων",
     "exportCsv": "Εξαγωγή σε CSV",
+    "refresh": "Ανανέωση",
     "exportSelected": "Εξαγωγή επιλεγμένων ({{count}})",
     "exporting": "Εξαγωγή...",
     "exportSuccess": "Οι συναλλαγές εξήχθησαν επιτυχώς",

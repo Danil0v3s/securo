@@ -941,6 +941,7 @@
     "searchPlaceholder": "Tranzakciók keresése...",
     "clearFilters": "Szűrők törlése",
     "exportCsv": "CSV exportálása",
+    "refresh": "Frissítés",
     "exportSelected": "Kijelöltek exportálása ({{count}})",
     "exporting": "Exportálás...",
     "exportSuccess": "Tranzakciók sikeresen exportálva",

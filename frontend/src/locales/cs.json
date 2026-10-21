@@ -973,6 +973,7 @@
     "searchPlaceholder": "Hledat transakce...",
     "clearFilters": "Zrušit filtry",
     "exportCsv": "Exportovat CSV",
+    "refresh": "Obnovit",
     "exportSelected": "Exportovat vybrané ({{count}})",
     "exportSelected_one": "Exportovat vybranou ({{count}})",
     "exportSelected_few": "Exportovat vybrané ({{count}})",

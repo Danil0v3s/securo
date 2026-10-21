@@ -941,6 +941,7 @@
     "searchPlaceholder": "लेन-देन खोजें...",
     "clearFilters": "फ़िल्टर हटाएँ",
     "exportCsv": "CSV एक्सपोर्ट करें",
+    "refresh": "रिफ्रेश करें",
     "exportSelected": "चयनित एक्सपोर्ट करें ({{count}})",
     "exporting": "एक्सपोर्ट हो रहा है...",
     "exportSuccess": "लेन-देन सफलतापूर्वक एक्सपोर्ट हुए",

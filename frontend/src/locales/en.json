@@ -941,6 +941,7 @@
     "searchPlaceholder": "Search transactions...",
     "clearFilters": "Clear filters",
     "exportCsv": "Export CSV",
+    "refresh": "Refresh",
     "exportSelected": "Export Selected ({{count}})",
     "exporting": "Exporting...",
     "exportSuccess": "Transactions exported successfully",

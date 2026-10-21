@@ -955,6 +955,7 @@
     "searchPlaceholder": "Szukaj transakcji...",
     "clearFilters": "Wyczyść filtry",
     "exportCsv": "Eksportuj CSV",
+    "refresh": "Odśwież",
     "exportSelected_one": "Eksportuj zaznaczone ({{count}})",
     "exportSelected_few": "Eksportuj zaznaczone ({{count}})",
     "exportSelected_many": "Eksportuj zaznaczone ({{count}})",

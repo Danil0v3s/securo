@@ -941,6 +941,7 @@
     "searchPlaceholder": "Transaktionen suchen...",
     "clearFilters": "Filter löschen",
     "exportCsv": "Als CSV exportieren",
+    "refresh": "Aktualisieren",
     "exportSelected": "Ausgewählte exportieren ({{count}})",
     "exporting": "Exportieren...",
     "exportSuccess": "Transaktionen erfolgreich exportiert",

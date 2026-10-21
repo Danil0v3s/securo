@@ -943,6 +943,7 @@
     "searchPlaceholder": "Buscar transações...",
     "clearFilters": "Limpar filtros",
     "exportCsv": "Exportar CSV",
+    "refresh": "Atualizar",
     "exportSelected": "Exportar Selecionadas ({{count}})",
     "exporting": "Exportando...",
     "exportSuccess": "Transações exportadas com sucesso",

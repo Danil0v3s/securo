@@ -941,6 +941,7 @@
     "searchPlaceholder": "取引を検索...",
     "clearFilters": "フィルタをクリア",
     "exportCsv": "CSVエクスポート",
+    "refresh": "更新",
     "exportSelected": "選択をエクスポート({{count}}件)",
     "exporting": "エクスポート中...",
     "exportSuccess": "取引をエクスポートしました",
