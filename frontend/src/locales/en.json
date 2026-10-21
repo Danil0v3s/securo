@@ -1718,7 +1718,9 @@
     "errors": {
       "invalid_date": "Invalid Date Format",
       "no_amount": "No Inflow or Outflow Amount",
-      "invalid_amount": "Invalid Amount Format"
+      "invalid_amount": "Invalid Amount Format",
+      "conflicting_amount": "Conflicting Amount Fields",
+      "invalid_direction": "Invalid Credit or Debit Indicator"
     },
     "selectAll": "Select all"
   },

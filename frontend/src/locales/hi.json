@@ -1718,7 +1718,9 @@
     "errors": {
       "invalid_date": "अमान्य तिथि प्रारूप",
       "no_amount": "कोई आवक या जावक राशि नहीं",
-      "invalid_amount": "अमान्य राशि प्रारूप"
+      "invalid_amount": "अमान्य राशि प्रारूप",
+      "conflicting_amount": "टकराव में राशि फ़ील्ड",
+      "invalid_direction": "अमान्य क्रेडिट/डेबिट संकेतक"
     },
     "selectAll": "सभी चुनें"
   },

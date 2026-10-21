@@ -1718,7 +1718,9 @@
     "errors": {
       "invalid_date": "Μη έγκυρη μορφή ημερομηνίας",
       "no_amount": "Χωρίς ποσό εισροής ή εκροής",
-      "invalid_amount": "Μη έγκυρη μορφή ποσού"
+      "invalid_amount": "Μη έγκυρη μορφή ποσού",
+      "conflicting_amount": "Αντιφατικά πεδία ποσών",
+      "invalid_direction": "Μη έγκυρος δείκτης πίστωσης/debit"
     },
     "selectAll": "Επιλογή όλων"
   },

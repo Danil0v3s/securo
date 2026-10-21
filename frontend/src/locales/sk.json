@@ -1834,7 +1834,9 @@
     "errors": {
       "invalid_date": "Neplatný formát dátumu",
       "no_amount": "Chýba suma príjmu alebo výdaja",
-      "invalid_amount": "Neplatný formát sumy"
+      "invalid_amount": "Neplatný formát sumy",
+      "conflicting_amount": "Konfliktné polia sumy",
+      "invalid_direction": "Neplatný indikátor príjmu/výdavku"
     },
     "selectAll": "Vybrať všetko"
   },

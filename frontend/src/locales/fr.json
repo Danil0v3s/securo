@@ -1722,7 +1722,9 @@
     "errors": {
       "invalid_date": "Format de date invalide",
       "no_amount": "Aucun montant d'entrée ou de sortie",
-      "invalid_amount": "Format de montant invalide"
+      "invalid_amount": "Format de montant invalide",
+      "conflicting_amount": "Champs de montant contradictoires",
+      "invalid_direction": "Indicateur crédit/débit invalide"
     },
     "selectAll": "Tout sélectionner"
   },

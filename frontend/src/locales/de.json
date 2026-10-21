@@ -1719,7 +1719,9 @@
     "errors": {
       "invalid_date": "Ungültiges Datumsformat",
       "no_amount": "Kein Zu- oder Abflussbetrag",
-      "invalid_amount": "Ungültiges Betragsformat"
+      "invalid_amount": "Ungültiges Betragsformat",
+      "conflicting_amount": "Widersprüchliche Betragfelder",
+      "invalid_direction": "Ungültiges Gutschrift-/Lastschriftkennzeichen"
     },
     "selectAll": "Alle auswählen"
   },

@@ -1722,7 +1722,9 @@
     "errors": {
       "invalid_date": "Formato de data inválido",
       "no_amount": "Nenhum valor de entrada ou saída",
-      "invalid_amount": "Formato de valor inválido"
+      "invalid_amount": "Formato de valor inválido",
+      "conflicting_amount": "Campos de valor conflitantes",
+      "invalid_direction": "Indicador de crédito/débito inválido"
     },
     "selectAll": "Selecionar todos"
   },

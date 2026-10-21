@@ -1718,7 +1718,9 @@
     "errors": {
       "invalid_date": "Érvénytelen dátumformátum",
       "no_amount": "Nincs bejövő vagy kimenő összeg",
-      "invalid_amount": "Érvénytelen összegformátum"
+      "invalid_amount": "Érvénytelen összegformátum",
+      "conflicting_amount": "Ütköző összegmezők",
+      "invalid_direction": "Érvénytelen jóváírás/levonás jelző"
     },
     "selectAll": "Összes kijelölése"
   },

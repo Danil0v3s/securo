@@ -1720,7 +1720,9 @@
     "errors": {
       "invalid_date": "Ongeldige datumformaat",
       "no_amount": "Geen in- of uitstroombedrag",
-      "invalid_amount": "Ongeldig bedragformaat"
+      "invalid_amount": "Ongeldig bedragformaat",
+      "conflicting_amount": "Tegensprekende bedragsvelden",
+      "invalid_direction": "Ongeldige credit/debet-indicator"
     },
     "selectAll": "Alles selecteren"
   },

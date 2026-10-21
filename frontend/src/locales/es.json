@@ -1722,7 +1722,9 @@
     "errors": {
       "invalid_date": "Formato de fecha no válido",
       "no_amount": "Sin importe de entrada o salida",
-      "invalid_amount": "Formato de importe no válido"
+      "invalid_amount": "Formato de importe no válido",
+      "conflicting_amount": "Campos de importe en conflicto",
+      "invalid_direction": "Indicador de crédito/débito no válido"
     },
     "selectAll": "Seleccionar todo"
   },

@@ -1722,7 +1722,9 @@
     "errors": {
       "invalid_date": "Formato data non valido",
       "no_amount": "Nessun importo in entrata o in uscita",
-      "invalid_amount": "Formato importo non valido"
+      "invalid_amount": "Formato importo non valido",
+      "conflicting_amount": "Campi di importo in conflitto",
+      "invalid_direction": "Indicatore accredito/addebito non valido"
     },
     "selectAll": "Seleziona tutto"
   },
