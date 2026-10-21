@@ -252,9 +252,10 @@ def _account_balance(acc_data: AccountData, holdings_counted: bool) -> Decimal:
     Some banks auto-apply idle cash to an investment and the provider reports
     that money both inside the account balance and as a holding (issue #843).
     The invested portion leaves the account balance only when this sync
-    actually counts a holding for it; with asset sync off, a failed or empty
-    investments fetch, the account keeps the full reported balance so the
-    money is never dropped from net worth.
+    actually counts a holding for it (a live holding in the fetched payload,
+    or, when the fetch failed, a live asset left by an earlier sync); with
+    asset sync off, an empty payload or nothing counted, the account keeps
+    the full reported balance so the money is never dropped from net worth.
     """
     if not holdings_counted or acc_data.auto_invested_balance <= 0:
         return acc_data.balance
@@ -283,6 +284,41 @@ async def _fetch_holdings(
 def _holdings_counted(holdings: Optional[list[HoldingData]]) -> bool:
     """Whether a holdings payload will leave at least one live asset."""
     return bool(holdings) and any(not h.is_withdrawn for h in holdings)
+
+
+async def _resolve_holdings_counted(
+    session: AsyncSession,
+    connection: BankConnection,
+    holdings: Optional[list[HoldingData]],
+    sync_enabled: bool,
+) -> bool:
+    """Whether this sync counts a holding for the connection's accounts.
+
+    A fetched payload decides on its own. When the fetch failed, the assets
+    sync is skipped and whatever it stored last stays in place, so the
+    answer comes from the database: a live (not archived, not sold) asset
+    this connection's holdings sync owns is still counted in net worth, and
+    keeping the gross balance next to it would count the invested money
+    twice. With asset sync off nothing is counted for this sync.
+    """
+    if not sync_enabled:
+        return False
+    if holdings is not None:
+        return _holdings_counted(holdings)
+    return bool(
+        await session.scalar(
+            select(
+                exists().where(
+                    Asset.workspace_id == connection.workspace_id,
+                    Asset.source == connection.provider,
+                    Asset.connection_id == connection.id,
+                    Asset.external_id.is_not(None),
+                    Asset.is_archived.is_(False),
+                    Asset.sell_date.is_(None),
+                )
+            )
+        )
+    )
 
 
 async def _sync_holdings(
@@ -1145,9 +1181,12 @@ async def handle_oauth_callback(
     # Holdings are fetched before the accounts so each account balance knows
     # whether its auto-invested portion is counted as an asset (issue #843).
     holdings: Optional[list[HoldingData]] = None
-    if _sync_assets_enabled(connection.settings):
+    assets_enabled = _sync_assets_enabled(connection.settings)
+    if assets_enabled:
         holdings = await _fetch_holdings(connection, connection_data.credentials)
-    holdings_counted = _holdings_counted(holdings)
+    holdings_counted = await _resolve_holdings_counted(
+        session, connection, holdings, assets_enabled
+    )
 
     institution_cache: dict[str, Institution] = {}
     for acc_data in connection_data.accounts:
@@ -2116,9 +2155,12 @@ async def sync_connection(
         # knows whether its auto-invested portion is counted as an asset
         # (issue #843).
         holdings: Optional[list[HoldingData]] = None
-        if _sync_assets_enabled(conn_settings):
+        assets_enabled = _sync_assets_enabled(conn_settings)
+        if assets_enabled:
             holdings = await _fetch_holdings(connection, credentials)
-        holdings_counted = _holdings_counted(holdings)
+        holdings_counted = await _resolve_holdings_counted(
+            session, connection, holdings, assets_enabled
+        )
         institution_cache: dict[str, Institution] = {}
         for acc_data in accounts_data:
             institution = await _resolve_institution(

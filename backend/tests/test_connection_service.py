@@ -2783,6 +2783,78 @@ async def test_sync_connection_keeps_gross_balance_when_holdings_fetch_fails(
     assert (await session.execute(select(Asset))).scalars().all() == []
 
 
+@pytest.mark.asyncio
+async def test_sync_connection_deducts_when_fetch_fails_with_live_synced_asset(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: when the investments fetch fails, the asset an earlier sync
+    stored stays counted, so the account still drops the auto-invested part
+    (the provider's current figure) instead of counting that money twice. The
+    stored asset is left as it was."""
+    from app.models.asset_value import AssetValue
+
+    first, _ = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None,
+    )
+    assert first.balance == Decimal("600")
+    conn = await session.get(BankConnection, first.connection_id)
+    asset = (
+        await session.execute(
+            select(Asset).where(Asset.external_id == "auto-inv-holding-1")
+        )
+    ).scalar_one()
+    values_before = (
+        await session.execute(
+            select(AssetValue.date, AssetValue.amount).where(
+                AssetValue.asset_id == asset.id
+            )
+        )
+    ).all()
+
+    account, provider = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None,
+        holdings=RuntimeError("investments unavailable"), conn=conn,
+    )
+
+    provider.get_holdings.assert_awaited_once()
+    await session.refresh(account)
+    assert account.balance == Decimal("600")
+    await session.refresh(asset)
+    assert asset.is_archived is False
+    assert asset.sell_date is None
+    values_after = (
+        await session.execute(
+            select(AssetValue.date, AssetValue.amount).where(
+                AssetValue.asset_id == asset.id
+            )
+        )
+    ).all()
+    assert values_after == values_before
+
+
+@pytest.mark.asyncio
+async def test_sync_connection_keeps_gross_when_fetch_fails_after_asset_archived(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: a failed fetch only deducts while a synced asset is live;
+    once the earlier holding was archived, the full balance is kept."""
+    first, _ = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None,
+    )
+    conn = await session.get(BankConnection, first.connection_id)
+    await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None, holdings=[], conn=conn,
+    )
+
+    account, _ = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None,
+        holdings=RuntimeError("investments unavailable"), conn=conn,
+    )
+
+    await session.refresh(account)
+    assert account.balance == Decimal("1000")
+
+
 async def _oauth_auto_invested_account(session, test_workspace, test_user, holdings):
     from app.models.account import Account
 
