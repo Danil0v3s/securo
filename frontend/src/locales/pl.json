@@ -1809,7 +1809,7 @@
       "no_amount": "Brak kwoty wpływu lub wypływu",
       "invalid_amount": "Nieprawidłowy format kwoty",
       "conflicting_amount": "Konfliktowe pola kwot",
-      "invalid_direction": "Nieprawidłowy wskaźnik pożytków/czynszu"
+      "invalid_direction": "Nieprawidłowy wskaźnik uznania/obciążenia"
     },
     "selectAll": "Zaznacz wszystko"
   },
