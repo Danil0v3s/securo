@@ -1262,6 +1262,7 @@
     "updated": "Zaktualizowano konto",
     "deleted": "Usunięto konto",
     "syncDone": "Synchronizacja zakończona",
+    "syncRateLimited": "Osiągnięto dzienny limit banku, nie pobrano nowych danych. Spróbuj ponownie później.",
     "syncError": "Synchronizacja nie powiodła się",
     "connected": "Pomyślnie połączono bank",
     "connectError": "Nie udało się połączyć banku",

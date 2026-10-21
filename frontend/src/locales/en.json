@@ -1212,6 +1212,7 @@
     "updated": "Account updated",
     "deleted": "Account deleted",
     "syncDone": "Sync completed",
+    "syncRateLimited": "Bank daily limit reached, no new data was fetched. Try again later.",
     "syncError": "Sync failed",
     "connected": "Bank connected successfully",
     "connectError": "Failed to connect bank",

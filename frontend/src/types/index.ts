@@ -155,6 +155,14 @@ export interface ConnectionSettings {
   sync_assets?: boolean
 }
 
+// Response of POST /connections/{id}/sync: the connection plus what the run
+// actually did. "rate_limited" means the provider throttled the request
+// (429): nothing was pulled and last_sync_at was left untouched (issue #736).
+export interface SyncResult extends BankConnection {
+  merged_count: number
+  sync_outcome: 'refreshed' | 'rate_limited'
+}
+
 export interface Account {
   id: string
   user_id: string

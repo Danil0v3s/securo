@@ -13,6 +13,7 @@ import type {
   CategoryGroup,
   BankConnection,
   ConnectionSettings,
+  SyncResult,
   Account,
   AccountSummary,
   Collection,
@@ -429,7 +430,7 @@ export const connections = {
     const { data } = await api.post(`/connections/${connectionId}/oauth/reauth-url`)
     return data.url
   },
-  sync: async (id: string): Promise<BankConnection> => {
+  sync: async (id: string): Promise<SyncResult> => {
     const { data } = await api.post(`/connections/${id}/sync`)
     return data
   },

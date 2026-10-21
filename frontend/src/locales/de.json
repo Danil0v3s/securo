@@ -1213,6 +1213,7 @@
     "updated": "Konto aktualisiert",
     "deleted": "Konto gelöscht",
     "syncDone": "Synchronisierung abgeschlossen",
+    "syncRateLimited": "Tägliches Banklimit erreicht, es wurden keine neuen Daten geladen. Bitte später erneut versuchen.",
     "syncError": "Synchronisierung fehlgeschlagen",
     "connected": "Bank erfolgreich verbunden",
     "connectError": "Verbindung zur Bank fehlgeschlagen",

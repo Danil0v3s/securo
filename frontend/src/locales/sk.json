@@ -1276,6 +1276,7 @@
     "updated": "Účet aktualizovaný",
     "deleted": "Účet vymazaný",
     "syncDone": "Synchronizácia dokončená",
+    "syncRateLimited": "Dosiahnutý denný limit banky, žadne novejé údaje neboli stiahnuté. Skúste to prosím neskôr.",
     "syncError": "Synchronizácia zlyhala",
     "connected": "Banka úspešne prepojená",
     "connectError": "Nepodarilo sa prepojiť banku",

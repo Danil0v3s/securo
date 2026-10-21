@@ -4,7 +4,7 @@ import re
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
-from typing import Optional
+from typing import Literal, Optional
 
 from sqlalchemy import delete, exists, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
@@ -1966,13 +1966,24 @@ async def _sync_credit_card_bills(
     return by_external_id
 
 
+# Outcome of a sync that completed without raising, reported to the caller
+# so the UI can tell "data read" from "the provider throttled us and nothing
+# was pulled" (issue #736). "refreshed" covers the normal path (the data may
+# be the provider's cached copy; whether a fresh pull happened is the
+# provider's own semantics). "rate_limited" means the provider returned a
+# 429: nothing was pulled and last_sync_at was left untouched so the next
+# sync retries the same window. Errors (expired session, user action
+# required, generic failure) still propagate as exceptions.
+SyncOutcome = Literal["refreshed", "rate_limited"]
+
+
 async def sync_connection(
     session: AsyncSession,
     connection_id: uuid.UUID,
     workspace_id: uuid.UUID,
     requesting_user_id: uuid.UUID,
     trigger_provider_refresh: bool = False,
-) -> tuple[BankConnection, int]:
+) -> tuple[BankConnection, int, SyncOutcome]:
     connection = await get_connection(
         session, connection_id, workspace_id, for_update=True
     )
@@ -2551,7 +2562,7 @@ async def sync_connection(
             connection.status = "active"
         await session.commit()
         await session.refresh(connection)
-        return connection, merged_count
+        return connection, merged_count, "refreshed"
 
     except SessionExpiredError:
         # Provider consent expired — distinct from a generic error so the UI
@@ -2587,7 +2598,9 @@ async def sync_connection(
         # to the one we already hold rather than raising: re-raising here would
         # escape as a 500, which is exactly what this handler exists to avoid.
         refreshed = await session.get(BankConnection, connection_id)
-        return refreshed or connection, 0
+        # Report "rate_limited" so the caller (manual sync endpoint, UI) knows
+        # no fresh data was pulled and can say so instead of a success toast.
+        return refreshed or connection, 0, "rate_limited"
     except Exception:
         # Mark connection as errored so UI shows reconnect banner
         await session.rollback()

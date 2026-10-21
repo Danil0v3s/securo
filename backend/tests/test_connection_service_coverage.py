@@ -517,7 +517,7 @@ async def test_sync_trigger_refresh_refreshed_then_reads(session: AsyncSession, 
     p1, p2, p3 = _patch_helpers()
     with patch("app.services.connection_service.get_provider", return_value=mock_provider), \
          p1, p2, p3:
-        result, _ = await sync_connection(
+        result, _, _ = await sync_connection(
             session, conn.id, test_workspace.id, test_user.id,
             trigger_provider_refresh=True,
         )
@@ -570,7 +570,7 @@ async def test_sync_fuzzy_matches_manual_transaction(session: AsyncSession, test
     p1, p2, p3 = _patch_helpers()
     with patch("app.services.connection_service.get_provider", return_value=mock_provider), \
          p1, p2, p3:
-        result, merged = await sync_connection(session, conn.id, test_workspace.id, test_user.id)
+        result, merged, _ = await sync_connection(session, conn.id, test_workspace.id, test_user.id)
 
     assert result.status == "active"
     assert merged == 1
