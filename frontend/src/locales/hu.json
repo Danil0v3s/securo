@@ -1718,7 +1718,9 @@
     "errors": {
       "invalid_date": "Érvénytelen dátumformátum",
       "no_amount": "Nincs bejövő vagy kimenő összeg",
-      "invalid_amount": "Érvénytelen összegformátum"
+      "invalid_amount": "Érvénytelen összegformátum",
+      "invalid_fx_rate": "Érvénytelen árfolyam",
+      "ambiguous_amount": "Bemenő és kimenő összeg is megvan"
     },
     "selectAll": "Összes kijelölése"
   },
@@ -1771,6 +1773,7 @@
       "invalid_date": "olvashatatlan dátum",
       "invalid_quantity": "olvashatatlan mennyiség",
       "invalid_price": "olvashatatlan ár",
+      "invalid_fee": "olvashatatlan díj",
       "invalid_kind": "ismeretlen vétel/eladás érték",
       "unknown_ticker": "az árfolyam-szolgáltató nem ismeri a tickert",
       "oversell": "több egységet adnál el, mint amennyi a pozícióban van"

@@ -1722,7 +1722,9 @@
     "errors": {
       "invalid_date": "Format de date invalide",
       "no_amount": "Aucun montant d'entrée ou de sortie",
-      "invalid_amount": "Format de montant invalide"
+      "invalid_amount": "Format de montant invalide",
+      "invalid_fx_rate": "Taux de change invalide",
+      "ambiguous_amount": "Entrée et sortie renseignées"
     },
     "selectAll": "Tout sélectionner"
   },
@@ -1775,6 +1777,7 @@
       "invalid_date": "date illisible",
       "invalid_quantity": "quantité illisible",
       "invalid_price": "prix illisible",
+      "invalid_fee": "frais illisibles",
       "invalid_kind": "achat/vente non reconnu",
       "unknown_ticker": "ticker introuvable chez le fournisseur de cours",
       "oversell": "vente supérieure à la position"

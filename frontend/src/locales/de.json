@@ -1719,7 +1719,9 @@
     "errors": {
       "invalid_date": "Ungültiges Datumsformat",
       "no_amount": "Kein Zu- oder Abflussbetrag",
-      "invalid_amount": "Ungültiges Betragsformat"
+      "invalid_amount": "Ungültiges Betragsformat",
+      "invalid_fx_rate": "Ungültiger Wechselkurs",
+      "ambiguous_amount": "Zu- und Abflussbetrag ausgefüllt"
     },
     "selectAll": "Alle auswählen"
   },
@@ -1772,6 +1774,7 @@
       "invalid_date": "unlesbares Datum",
       "invalid_quantity": "unlesbare Stückzahl",
       "invalid_price": "unlesbarer Preis",
+      "invalid_fee": "unlesbare Gebühr",
       "invalid_kind": "Kauf/Verkauf nicht erkannt",
       "unknown_ticker": "Ticker beim Kursanbieter nicht gefunden",
       "oversell": "Verkauf größer als die Position"

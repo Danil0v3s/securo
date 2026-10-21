@@ -1718,7 +1718,9 @@
     "errors": {
       "invalid_date": "Invalid Date Format",
       "no_amount": "No Inflow or Outflow Amount",
-      "invalid_amount": "Invalid Amount Format"
+      "invalid_amount": "Invalid Amount Format",
+      "invalid_fx_rate": "Invalid Exchange Rate",
+      "ambiguous_amount": "Both Inflow and Outflow Filled"
     },
     "selectAll": "Select all"
   },
@@ -1771,6 +1773,7 @@
       "invalid_date": "unreadable date",
       "invalid_quantity": "unreadable quantity",
       "invalid_price": "unreadable price",
+      "invalid_fee": "unreadable fee",
       "invalid_kind": "unrecognised buy/sell value",
       "unknown_ticker": "ticker not found by the price provider",
       "oversell": "selling more units than the position holds"

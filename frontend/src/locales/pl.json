@@ -1807,7 +1807,9 @@
     "errors": {
       "invalid_date": "Nieprawidłowy format daty",
       "no_amount": "Brak kwoty wpływu lub wypływu",
-      "invalid_amount": "Nieprawidłowy format kwoty"
+      "invalid_amount": "Nieprawidłowy format kwoty",
+      "invalid_fx_rate": "Nieprawidłowy kurs walutowy",
+      "ambiguous_amount": "Wpływ i wypływ uzupełnione"
     },
     "selectAll": "Zaznacz wszystko"
   },
@@ -1860,6 +1862,7 @@
       "invalid_date": "nieczytelna data",
       "invalid_quantity": "nieczytelna ilość",
       "invalid_price": "nieczytelna cena",
+      "invalid_fee": "nieczytelna prowizja",
       "invalid_kind": "nierozpoznane kupno/sprzedaż",
       "unknown_ticker": "ticker nieznany dostawcy notowań",
       "oversell": "sprzedaż większa niż pozycja"

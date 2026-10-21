@@ -1718,7 +1718,9 @@
     "errors": {
       "invalid_date": "अमान्य तिथि प्रारूप",
       "no_amount": "कोई आवक या जावक राशि नहीं",
-      "invalid_amount": "अमान्य राशि प्रारूप"
+      "invalid_amount": "अमान्य राशि प्रारूप",
+      "invalid_fx_rate": "अमान्य विनिमय दर",
+      "ambiguous_amount": "आवक और जावक दोनों भरी हैं"
     },
     "selectAll": "सभी चुनें"
   },
@@ -1771,6 +1773,7 @@
       "invalid_date": "अपठनीय तिथि",
       "invalid_quantity": "अपठनीय मात्रा",
       "invalid_price": "अपठनीय मूल्य",
+      "invalid_fee": "अपठनीय शुल्क",
       "invalid_kind": "अपरिचित खरीद/बिक्री मान",
       "unknown_ticker": "मूल्य प्रदाता को टिकर नहीं मिला",
       "oversell": "पोज़िशन में मौजूद इकाइयों से ज़्यादा बेचना"

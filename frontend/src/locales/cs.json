@@ -1826,7 +1826,9 @@
     "errors": {
       "invalid_date": "Neplatný formát data",
       "no_amount": "Chybí částka příjmu nebo výdaje",
-      "invalid_amount": "Neplatný formát částky"
+      "invalid_amount": "Neplatný formát částky",
+      "invalid_fx_rate": "Neplatná měnová sazba",
+      "ambiguous_amount": "Vyplněny příjem i výdaj"
     },
     "selectAll": "Vybrat vše",
     "incomeCount_one": "{{count}} příjem",
@@ -1903,6 +1905,7 @@
       "invalid_date": "nečitelné datum",
       "invalid_quantity": "nečitelné množství",
       "invalid_price": "nečitelná cena",
+      "invalid_fee": "nečitelný poplatek",
       "invalid_kind": "nerozpoznaná hodnota nákup/prodej",
       "unknown_ticker": "poskytovatel cen ticker nenašel",
       "oversell": "prodej většího množství, než pozice obsahuje"

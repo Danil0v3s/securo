@@ -1720,7 +1720,9 @@
     "errors": {
       "invalid_date": "Ongeldige datumformaat",
       "no_amount": "Geen in- of uitstroombedrag",
-      "invalid_amount": "Ongeldig bedragformaat"
+      "invalid_amount": "Ongeldig bedragformaat",
+      "invalid_fx_rate": "Ongeldige wisselkoers",
+      "ambiguous_amount": "In- en uitstroombedrag ingevuld"
     },
     "selectAll": "Alles selecteren"
   },
@@ -1773,6 +1775,7 @@
       "invalid_date": "onleesbare datum",
       "invalid_quantity": "onleesbare hoeveelheid",
       "invalid_price": "onleesbare prijs",
+      "invalid_fee": "onleesbare kosten",
       "invalid_kind": "onbekende koop-/verkoopwaarde",
       "unknown_ticker": "ticker niet gevonden door de prijsaanbieder",
       "oversell": "meer eenheden verkopen dan de positie bevat"
