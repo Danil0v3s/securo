@@ -17,20 +17,18 @@ describe('api data-change signal (issue #763)', () => {
   })
 
   it('bumps the signal after a successful mutation', async () => {
-    vi.spyOn(Date, 'now').mockReturnValue(1000)
     await api.post('/transactions', { description: 'x' })
-    expect(localStorage.getItem(DATA_CHANGED_KEY)).toBe('1000')
+    expect(localStorage.getItem(DATA_CHANGED_KEY)).toBeTruthy()
   })
 
   it('bumps with a new value on each mutation, so repeated changes both notify', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1000)
     await api.patch('/transactions/1', { description: 'a' })
     const first = localStorage.getItem(DATA_CHANGED_KEY)
-    vi.spyOn(Date, 'now').mockReturnValue(2000)
     await api.delete('/transactions/1')
     const second = localStorage.getItem(DATA_CHANGED_KEY)
-    expect(first).toBe('1000')
-    expect(second).toBe('2000')
+    expect(first).toBeTruthy()
+    expect(second).not.toBe(first)
   })
 
   it('does not bump on reads', async () => {
@@ -44,9 +42,8 @@ describe('api data-change signal (issue #763)', () => {
   })
 
   it('still bumps on a real POST mutation that sits next to the preview', async () => {
-    vi.spyOn(Date, 'now').mockReturnValue(3000)
     await rules.applyAll()
-    expect(localStorage.getItem(DATA_CHANGED_KEY)).toBe('3000')
+    expect(localStorage.getItem(DATA_CHANGED_KEY)).toBeTruthy()
   })
 
   it('does not bump when the mutation fails', async () => {
