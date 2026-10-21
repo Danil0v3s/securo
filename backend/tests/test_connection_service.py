@@ -2631,6 +2631,82 @@ async def test_sync_connection_imports_holdings_by_default(
     assert asset.connection_id == conn.id
 
 
+async def _sync_auto_invested_account(session, test_user, test_workspace, settings):
+    """Sync one checking account whose balance of 1000 includes 400 that the
+    bank auto-applied to an investment also reported as a holding."""
+    from app.models.account import Account
+
+    conn = await _make_connection(
+        session, test_user.id, "Auto Invest Bank", settings=settings,
+    )
+    mock_provider = AsyncMock()
+    mock_provider.refresh_credentials = AsyncMock(return_value={"token": "t"})
+    mock_provider.get_institution_logo = AsyncMock(return_value=None)
+    mock_provider.get_accounts = AsyncMock(return_value=[
+        AccountData(
+            external_id="auto-inv-acc-1", name="Checking",
+            type="checking", balance=Decimal("1000"), currency="BRL",
+            auto_invested_balance=Decimal("400"),
+        ),
+    ])
+    mock_provider.get_transactions = AsyncMock(return_value=[])
+    mock_provider.get_holdings = AsyncMock(return_value=[
+        HoldingData(
+            external_id="auto-inv-holding-1", name="Auto Invest Fund",
+            currency="BRL", current_value=Decimal("400"),
+        ),
+    ])
+
+    with patch("app.services.connection_service.get_provider", return_value=mock_provider), \
+         patch("app.services.connection_service.detect_transfer_pairs", new_callable=AsyncMock), \
+         patch("app.services.connection_service.stamp_primary_amount", new_callable=AsyncMock), \
+         patch("app.services.connection_service.apply_rules_to_transaction", new_callable=AsyncMock):
+        result_conn, _ = await sync_connection(session, conn.id, test_workspace.id, test_user.id)
+
+    assert result_conn.status == "active"
+    account = (
+        await session.execute(
+            select(Account).where(Account.external_id == "auto-inv-acc-1")
+        )
+    ).scalar_one()
+    return account, mock_provider
+
+
+@pytest.mark.asyncio
+async def test_sync_connection_excludes_auto_invested_balance_when_assets_sync(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: with holdings imported, the auto-invested part is counted
+    once, as the asset, and leaves the account balance."""
+    account, provider = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None,
+    )
+
+    provider.get_holdings.assert_awaited_once()
+    assert account.balance == Decimal("600")
+    asset = (
+        await session.execute(
+            select(Asset).where(Asset.external_id == "auto-inv-holding-1")
+        )
+    ).scalar_one()
+    assert asset.connection_id == account.connection_id
+
+
+@pytest.mark.asyncio
+async def test_sync_connection_keeps_gross_balance_when_asset_sync_disabled(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: with asset sync off the holding is never imported, so the
+    account keeps the full reported balance instead of losing that money."""
+    account, provider = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings={"sync_assets": False},
+    )
+
+    provider.get_holdings.assert_not_awaited()
+    assert account.balance == Decimal("1000")
+    assert (await session.execute(select(Asset))).scalars().all() == []
+
+
 @pytest.mark.asyncio
 async def test_sync_connection_does_not_revive_ignored_transaction(
     session: AsyncSession, test_user, test_workspace,

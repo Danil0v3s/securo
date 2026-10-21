@@ -246,6 +246,20 @@ def _sync_assets_enabled(settings: Optional[dict]) -> bool:
     return (settings or {}).get("sync_assets", True) is not False
 
 
+def _account_balance(acc_data: AccountData, assets_enabled: bool) -> Decimal:
+    """Balance to store for a synced account.
+
+    Some banks auto-apply idle cash to an investment and the provider reports
+    that money both inside the account balance and as a holding (issue #843).
+    The holding only becomes an asset when the connection imports holdings,
+    so the invested portion leaves the account balance only in that case;
+    with asset sync off the account keeps the full reported balance.
+    """
+    if not assets_enabled or acc_data.auto_invested_balance <= 0:
+        return acc_data.balance
+    return acc_data.balance - acc_data.auto_invested_balance
+
+
 async def _sync_holdings(
     session: AsyncSession,
     user_id: uuid.UUID,
@@ -1122,7 +1136,9 @@ async def handle_oauth_callback(
             display_name=institution.name if institution else None,
             masked_number=acc_data.masked_number,
             type=acc_data.type,
-            balance=acc_data.balance,
+            balance=_account_balance(
+                acc_data, _sync_assets_enabled(connection.settings)
+            ),
             currency=acc_data.currency,
             credit_limit=acc_data.credit_limit if is_cc else None,
             statement_close_day=acc_data.statement_close_day if is_cc else None,
@@ -2119,7 +2135,9 @@ async def sync_connection(
                 # downstream sites negate it, so store positive-for-debt to keep
                 # them provider-agnostic and avoid double-counting.
                 account.balance = _simplefin_to_internal_balance(
-                    connection.provider, account.type, acc_data.balance
+                    connection.provider,
+                    account.type,
+                    _account_balance(acc_data, _sync_assets_enabled(conn_settings)),
                 )
                 account.name = acc_data.name
                 # Backfills existing accounts on their next sync. Only written
@@ -2175,7 +2193,9 @@ async def sync_connection(
                     display_name=institution.name if institution else None,
                     masked_number=acc_data.masked_number,
                     type=acc_data.type,
-                    balance=acc_data.balance,
+                    balance=_account_balance(
+                        acc_data, _sync_assets_enabled(conn_settings)
+                    ),
                     currency=acc_data.currency,
                     credit_limit=acc_data.credit_limit if is_cc else None,
                     statement_close_day=acc_data.statement_close_day if is_cc else None,
