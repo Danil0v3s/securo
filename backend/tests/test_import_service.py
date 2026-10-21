@@ -3449,3 +3449,80 @@ class TestCamtFailedRowLineNumbers:
         transactions, failed_rows = parse_camt(xml)
         assert len(transactions) == 1
         assert [(r.description, r.line_number) for r in failed_rows] == [("Second", 10)]
+
+
+# ---------------------------------------------------------------------------
+# Split-mode amount and fx_rate validation (issue #850)
+# ---------------------------------------------------------------------------
+
+
+class TestSplitModeValidation:
+    """Split inflow/outflow columns must report bad rows, not import them."""
+
+    CSV = (
+        "date,description,inflow,outflow\n"
+        "2026-01-10,Salary,1000,\n"
+        "2026-01-11,Rent,,800\n"
+        "2026-01-12,Bad inflow,abc,\n"
+        "2026-01-13,Bad outflow,,xyz\n"
+        "2026-01-14,Both filled,5,7\n"
+        "2026-01-15,Neither filled,,\n"
+    )
+
+    def _parse(self):
+        return parse_csv(
+            self.CSV.encode("utf-8"), inflow_column="inflow", outflow_column="outflow"
+        )
+
+    def test_good_rows_still_import(self):
+        transactions, _ = self._parse()
+        assert [(t.description, t.type, t.amount) for t in transactions] == [
+            ("Salary", "credit", Decimal("1000")),
+            ("Rent", "debit", Decimal("800")),
+        ]
+
+    def test_bad_rows_are_reported_row_by_row(self):
+        _, failed = self._parse()
+        assert [(f.description, f.error_reason, f.raw_value) for f in failed] == [
+            ("Bad inflow", "invalid_amount", "inflow: abc"),
+            ("Bad outflow", "invalid_amount", "outflow: xyz"),
+            ("Both filled", "ambiguous_amount", "inflow: 5, outflow: 7"),
+            ("Neither filled", "no_amount", "inflow: , outflow: "),
+        ]
+
+
+class TestCsvFxRateValidation:
+    """A typed fx_rate that is not a rate must fail the row, not vanish."""
+
+    CSV = (
+        "date,description,amount,currency,fx_rate\n"
+        "2026-01-10,USD wire,100,USD,5.4\n"
+        "2026-01-11,Bad rate,100,USD,abc\n"
+        "2026-01-12,Negative rate,100,USD,-1\n"
+        "2026-01-13,Blank rate,100,BRL,   \n"
+        "2026-01-14,Zero rate,100,BRL,0\n"
+        "2026-01-15,Empty rate,100,BRL,\n"
+    )
+
+    def _parse(self):
+        return parse_csv(self.CSV.encode("utf-8"))
+
+    def test_valid_rate_kept(self):
+        transactions, _ = self._parse()
+        assert transactions[0].description == "USD wire"
+        assert transactions[0].currency == "USD"
+        assert transactions[0].fx_rate == Decimal("5.4")
+
+    def test_blank_or_zero_rate_means_no_rate(self):
+        # Rows in the account's own currency often leave the column blank,
+        # pad it with spaces, or fill it with 0: none of them is a bad rate.
+        transactions, _ = self._parse()
+        rest = [(t.description, t.fx_rate) for t in transactions[1:]]
+        assert rest == [("Blank rate", None), ("Zero rate", None), ("Empty rate", None)]
+
+    def test_bad_rates_reported(self):
+        _, failed = self._parse()
+        assert [(f.description, f.error_reason) for f in failed] == [
+            ("Bad rate", "invalid_fx_rate"),
+            ("Negative rate", "invalid_fx_rate"),
+        ]

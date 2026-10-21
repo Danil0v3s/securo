@@ -943,6 +943,7 @@
     "searchPlaceholder": "Buscar transações...",
     "clearFilters": "Limpar filtros",
     "exportCsv": "Exportar CSV",
+    "refresh": "Atualizar",
     "exportSelected": "Exportar Selecionadas ({{count}})",
     "exporting": "Exportando...",
     "exportSuccess": "Transações exportadas com sucesso",
@@ -1216,6 +1217,7 @@
     "updated": "Conta atualizada",
     "deleted": "Conta excluída",
     "syncDone": "Sincronização concluída",
+    "syncRateLimited": "Limite diário do banco atingido, nenhum dado novo foi buscado. Tente novamente mais tarde.",
     "syncError": "Erro ao sincronizar",
     "connected": "Banco conectado com sucesso",
     "connectError": "Erro ao conectar banco",
@@ -1723,6 +1725,8 @@
       "invalid_date": "Formato de data inválido",
       "no_amount": "Nenhum valor de entrada ou saída",
       "invalid_amount": "Formato de valor inválido",
+      "invalid_fx_rate": "Câmbio inválido",
+      "ambiguous_amount": "Entrada e saída preenchidas",
       "conflicting_amount": "Campos de valor conflitantes",
       "invalid_direction": "Indicador de crédito/débito inválido"
     },
@@ -1777,6 +1781,7 @@
       "invalid_date": "data ilegível",
       "invalid_quantity": "quantidade ilegível",
       "invalid_price": "preço ilegível",
+      "invalid_fee": "taxa ilegível",
       "invalid_kind": "compra/venda não reconhecida",
       "unknown_ticker": "ativo não encontrado no provedor de cotações",
       "oversell": "venda maior do que a posição"

@@ -777,26 +777,48 @@ def parse_csv(
 
         # Parse amount
         if use_split:
-            inflow_str = normalize_amount(row.get(inflow_col, ""), decimal_separator)
-            outflow_str = normalize_amount(row.get(outflow_col, ""), decimal_separator)
+            inflow_raw = (row.get(inflow_col, "") or "").strip()
+            outflow_raw = (row.get(outflow_col, "") or "").strip()
+            inflow_str = normalize_amount(inflow_raw, decimal_separator)
+            outflow_str = normalize_amount(outflow_raw, decimal_separator)
 
-            try:
-                inflow = Decimal(inflow_str) if inflow_str else Decimal('0')
-            except Exception:
-                inflow = Decimal('0')
-            try:
-                outflow = Decimal(outflow_str) if outflow_str else Decimal('0')
-            except Exception:
-                outflow = Decimal('0')
-
-            if inflow > 0:
+            # A filled cell that survives no normalization is garbage, not
+            # zero: report it like the single-amount path does for
+            # invalid_amount instead of silently importing it as nothing.
+            inflow = outflow = None
+            bad_cell = None
+            if inflow_raw:
+                try:
+                    inflow = Decimal(inflow_str) if inflow_str else None
+                except Exception:
+                    inflow = None
+                if inflow is None:
+                    bad_cell = f"inflow: {inflow_raw}"
+            if bad_cell is None and outflow_raw:
+                try:
+                    outflow = Decimal(outflow_str) if outflow_str else None
+                except Exception:
+                    outflow = None
+                if outflow is None:
+                    bad_cell = f"outflow: {outflow_raw}"
+            if bad_cell is not None:
+                failed_rows.append(FailedRow(line_number=reader.line_num, description=row.get(desc_col, "").strip(), raw_value=bad_cell, error_reason="invalid_amount"))
+                continue  # Skip invalid amounts
+            if inflow and inflow > 0 and outflow and outflow > 0:
+                # Both columns positive cannot be read as credit-versus-debit
+                # without guessing; make the user fix the file instead of
+                # importing the wrong direction.
+                raw_val = f"inflow: {inflow_raw}, outflow: {outflow_raw}"
+                failed_rows.append(FailedRow(line_number=reader.line_num, description=row.get(desc_col, "").strip(), raw_value=raw_val, error_reason="ambiguous_amount"))
+                continue
+            if inflow and inflow > 0:
                 amount = inflow
                 txn_type = "credit"
-            elif outflow > 0:
+            elif outflow and outflow > 0:
                 amount = outflow
                 txn_type = "debit"
             else:
-                raw_val = f"inflow: {row.get(inflow_col, '')}, outflow: {row.get(outflow_col, '')}"
+                raw_val = f"inflow: {inflow_raw}, outflow: {outflow_raw}"
                 failed_rows.append(FailedRow(line_number=reader.line_num, description=row.get(desc_col, "").strip(), raw_value=raw_val, error_reason="no_amount"))
                 continue  # Skip rows with no amount
         else:
@@ -824,13 +846,23 @@ def parse_csv(
         txn_fx_rate = None
         if currency_col and row.get(currency_col):
             txn_currency = row[currency_col].strip().upper() or None
-        if fx_rate_col and row.get(fx_rate_col):
-            fx_str = normalize_amount(row[fx_rate_col].strip())
-            if fx_str:
-                try:
-                    txn_fx_rate = Decimal(fx_str)
-                except Exception:
-                    pass
+        fx_raw = (row.get(fx_rate_col) or "").strip() if fx_rate_col else ""
+        if fx_raw:
+            fx_str = normalize_amount(fx_raw)
+            # A rate the user typed has to be a rate: an unparseable or
+            # negative cell used to be dropped silently, importing the row as
+            # if it were already in the account's currency. A blank cell or a
+            # zero still means "no rate given" (files often fill the column
+            # with 0 on rows in the account's own currency), which is how a
+            # zero rate was already treated at import time.
+            try:
+                rate = Decimal(fx_str) if fx_str else None
+            except Exception:
+                rate = None
+            if rate is None or rate < 0:
+                failed_rows.append(FailedRow(line_number=reader.line_num, description=row.get(desc_col, "").strip(), raw_value=fx_raw, error_reason="invalid_fx_rate"))
+                continue
+            txn_fx_rate = rate or None
 
         txn_payee = row[payee_col].strip() if payee_col and row.get(payee_col) else None
         txn_external_id = row[external_id_col].strip() if external_id_col and row.get(external_id_col) else None

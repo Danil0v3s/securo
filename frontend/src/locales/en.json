@@ -941,6 +941,7 @@
     "searchPlaceholder": "Search transactions...",
     "clearFilters": "Clear filters",
     "exportCsv": "Export CSV",
+    "refresh": "Refresh",
     "exportSelected": "Export Selected ({{count}})",
     "exporting": "Exporting...",
     "exportSuccess": "Transactions exported successfully",
@@ -1212,6 +1213,7 @@
     "updated": "Account updated",
     "deleted": "Account deleted",
     "syncDone": "Sync completed",
+    "syncRateLimited": "Bank daily limit reached, no new data was fetched. Try again later.",
     "syncError": "Sync failed",
     "connected": "Bank connected successfully",
     "connectError": "Failed to connect bank",
@@ -1719,6 +1721,8 @@
       "invalid_date": "Invalid Date Format",
       "no_amount": "No Inflow or Outflow Amount",
       "invalid_amount": "Invalid Amount Format",
+      "invalid_fx_rate": "Invalid Exchange Rate",
+      "ambiguous_amount": "Both Inflow and Outflow Filled",
       "conflicting_amount": "Conflicting Amount Fields",
       "invalid_direction": "Invalid Credit or Debit Indicator"
     },
@@ -1773,6 +1777,7 @@
       "invalid_date": "unreadable date",
       "invalid_quantity": "unreadable quantity",
       "invalid_price": "unreadable price",
+      "invalid_fee": "unreadable fee",
       "invalid_kind": "unrecognised buy/sell value",
       "unknown_ticker": "ticker not found by the price provider",
       "oversell": "selling more units than the position holds"

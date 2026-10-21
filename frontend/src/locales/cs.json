@@ -973,6 +973,7 @@
     "searchPlaceholder": "Hledat transakce...",
     "clearFilters": "Zrušit filtry",
     "exportCsv": "Exportovat CSV",
+    "refresh": "Obnovit",
     "exportSelected": "Exportovat vybrané ({{count}})",
     "exportSelected_one": "Exportovat vybranou ({{count}})",
     "exportSelected_few": "Exportovat vybrané ({{count}})",
@@ -1292,6 +1293,7 @@
     "updated": "Účet aktualizován",
     "deleted": "Účet smazán",
     "syncDone": "Synchronizace dokončena",
+    "syncRateLimited": "Dosáhnuto denního limitu banky, žádná nová data nebyla stažena. Zkuste to prosím později.",
     "syncError": "Synchronizace selhala",
     "connected": "Banka úspěšně propojena",
     "connectError": "Banku se nepodařilo propojit",
@@ -1827,6 +1829,8 @@
       "invalid_date": "Neplatný formát data",
       "no_amount": "Chybí částka příjmu nebo výdaje",
       "invalid_amount": "Neplatný formát částky",
+      "invalid_fx_rate": "Neplatná měnová sazba",
+      "ambiguous_amount": "Vyplněny příjem i výdaj",
       "conflicting_amount": "Konfliktní pole částek",
       "invalid_direction": "Neplatný indikátor příjmu/výdaje"
     },
@@ -1905,6 +1909,7 @@
       "invalid_date": "nečitelné datum",
       "invalid_quantity": "nečitelné množství",
       "invalid_price": "nečitelná cena",
+      "invalid_fee": "nečitelný poplatek",
       "invalid_kind": "nerozpoznaná hodnota nákup/prodej",
       "unknown_ticker": "poskytovatel cen ticker nenašel",
       "oversell": "prodej většího množství, než pozice obsahuje"

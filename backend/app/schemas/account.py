@@ -112,3 +112,11 @@ class AccountSummary(BaseModel):
     # True when no real FX rate is available, so the *_primary fields are
     # left unset rather than a 1:1 guess.
     fx_fallback: bool = False
+
+
+class AccountRunningBalancePoint(BaseModel):
+    """End-of-day balance on the account page's walk (#1202)."""
+
+    date: date
+    balance: float
+    balance_primary: Optional[float] = None

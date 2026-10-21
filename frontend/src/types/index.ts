@@ -155,6 +155,14 @@ export interface ConnectionSettings {
   sync_assets?: boolean
 }
 
+// Response of POST /connections/{id}/sync: the connection plus what the run
+// actually did. "rate_limited" means the provider throttled the request
+// (429): nothing was pulled and last_sync_at was left untouched (issue #736).
+export interface SyncResult extends BankConnection {
+  merged_count: number
+  sync_outcome: 'refreshed' | 'rate_limited'
+}
+
 export interface Account {
   id: string
   user_id: string
@@ -305,6 +313,12 @@ export interface Transaction {
   is_ignored: boolean
   // Keeps the transaction in the ledger/balance while excluding it from P&L.
   exclude_from_pnl?: boolean
+  // Balance right after this row, filled by the server only when the list
+  // was asked for it on a single non-credit-card account (#1202).
+  // `running_balance_primary` is null when the account is in the primary
+  // currency.
+  running_balance?: number | null
+  running_balance_primary?: number | null
   virtual?: boolean
 }
 
@@ -745,6 +759,13 @@ export interface MonthlyTrend {
 export interface DailyBalance {
   day: number
   balance: number | null
+}
+
+/** End-of-day balance of one account, one point per day (#1202). */
+export interface AccountRunningBalancePoint {
+  date: string
+  balance: number
+  balance_primary: number | null
 }
 
 export interface BalanceHistory {

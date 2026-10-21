@@ -941,6 +941,7 @@
     "searchPlaceholder": "Tranzakciók keresése...",
     "clearFilters": "Szűrők törlése",
     "exportCsv": "CSV exportálása",
+    "refresh": "Frissítés",
     "exportSelected": "Kijelöltek exportálása ({{count}})",
     "exporting": "Exportálás...",
     "exportSuccess": "Tranzakciók sikeresen exportálva",
@@ -1212,6 +1213,7 @@
     "updated": "Számla frissítve",
     "deleted": "Számla törölve",
     "syncDone": "Szinkronizálás kész",
+    "syncRateLimited": "Elérted a bank napi korlátját, nem érkeztek új adatok. Próbáld újra később.",
     "syncError": "Sikertelen szinkronizálás",
     "connected": "Bank sikeresen csatlakoztatva",
     "connectError": "Nem sikerült csatlakoztatni a bankot",
@@ -1719,6 +1721,8 @@
       "invalid_date": "Érvénytelen dátumformátum",
       "no_amount": "Nincs bejövő vagy kimenő összeg",
       "invalid_amount": "Érvénytelen összegformátum",
+      "invalid_fx_rate": "Érvénytelen árfolyam",
+      "ambiguous_amount": "Bemenő és kimenő összeg is megvan",
       "conflicting_amount": "Ütköző összegmezők",
       "invalid_direction": "Érvénytelen jóváírás/levonás jelző"
     },
@@ -1773,6 +1777,7 @@
       "invalid_date": "olvashatatlan dátum",
       "invalid_quantity": "olvashatatlan mennyiség",
       "invalid_price": "olvashatatlan ár",
+      "invalid_fee": "olvashatatlan díj",
       "invalid_kind": "ismeretlen vétel/eladás érték",
       "unknown_ticker": "az árfolyam-szolgáltató nem ismeri a tickert",
       "oversell": "több egységet adnál el, mint amennyi a pozícióban van"
