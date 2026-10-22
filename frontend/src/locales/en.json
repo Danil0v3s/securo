@@ -1166,6 +1166,7 @@
     "lastSync": "Last sync",
     "multiInstitutionLink": "{{provider}} · {{count}} institutions",
     "sync": "Sync",
+    "retrySync": "Retry sync",
     "disconnect": "Disconnect",
     "addManual": "Add Account",
     "editAccount": "Edit Account",

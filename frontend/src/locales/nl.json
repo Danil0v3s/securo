@@ -1167,6 +1167,7 @@
     "multiInstitutionLink_one": "{{provider}} · {{count}} instelling",
     "multiInstitutionLink_other": "{{provider}} · {{count}} instellingen",
     "sync": "Synchroniseren",
+    "retrySync": "Synchronisatie opnieuw proberen",
     "disconnect": "Verbreek de verbinding",
     "addManual": "Account toevoegen",
     "editAccount": "Account bewerken",

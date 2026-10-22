@@ -1170,6 +1170,7 @@
     "multiInstitutionLink_many": "{{provider}} · {{count}} instituciones",
     "multiInstitutionLink_other": "{{provider}} · {{count}} instituciones",
     "sync": "Sincronizar",
+    "retrySync": "Reintentar sincronización",
     "disconnect": "Desconectar",
     "addManual": "Agregar cuenta",
     "editAccount": "Editar cuenta",

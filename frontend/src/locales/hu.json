@@ -1166,6 +1166,7 @@
     "lastSync": "Utolsó szinkronizálás",
     "multiInstitutionLink": "{{provider}} · {{count}} intézmény",
     "sync": "Szinkronizálás",
+    "retrySync": "Szinkronizálás újrapróbálása",
     "disconnect": "Leválasztás",
     "addManual": "Számla hozzáadása",
     "editAccount": "Számla szerkesztése",

@@ -1183,6 +1183,7 @@
     "multiInstitutionLink_many": "{{provider}} · {{count}} установ",
     "multiInstitutionLink_other": "{{provider}} · {{count}} установи",
     "sync": "Синхронізувати",
+    "retrySync": "Повторити синхронізацію",
     "disconnect": "Відключити",
     "addManual": "Додати рахунок",
     "editAccount": "Редагувати рахунок",

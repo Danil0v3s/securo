@@ -329,6 +329,10 @@ export default function AccountsPage() {
               {connectionsList.map((conn) => {
                 const connAccounts = bankAccounts.filter((a) => a.connection_id === conn.id)
                 const needsReconnect = conn.status !== 'active'
+                // An error state does not always mean the token is dead: an
+                // upstream auth issue can be fixed without re-pasting, so the
+                // row offers a plain retry next to the reconnect action.
+                const canRetrySync = conn.status === 'error'
                 const syncPending = syncMutation.isPending && syncMutation.variables === conn.id
                 return (
                   <div key={conn.id} className="bg-card rounded-xl border border-border shadow-sm">
@@ -372,6 +376,19 @@ export default function AccountsPage() {
                           >
                             <Settings size={14} />
                           </Button>
+                          {canRetrySync && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                              onClick={() => syncMutation.mutate(conn.id)}
+                              disabled={syncPending}
+                              title={t('accounts.retrySync')}
+                              aria-label={t('accounts.retrySync')}
+                            >
+                              <RefreshCw size={14} className={syncPending ? 'animate-spin' : ''} />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"

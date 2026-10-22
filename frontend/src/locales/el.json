@@ -895,6 +895,7 @@
     "lastSync": "Τελευταίος συγχρονισμός",
     "multiInstitutionLink": "{{provider}} · {{count}} ιδρύματα",
     "sync": "Συγχρονισμός",
+    "retrySync": "Επανάληψη συγχρονισμού",
     "disconnect": "Αποσύνδεση",
     "addManual": "Προσθήκη λογαριασμού",
     "editAccount": "Επεξεργασία λογαριασμού",

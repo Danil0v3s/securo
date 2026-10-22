@@ -1166,6 +1166,7 @@
     "lastSync": "आख़िरी सिंक",
     "multiInstitutionLink": "{{provider}} · {{count}} संस्थान",
     "sync": "सिंक करें",
+    "retrySync": "सिंक का पुनः प्रयास करें",
     "disconnect": "डिस्कनेक्ट करें",
     "addManual": "खाता जोड़ें",
     "editAccount": "खाता संपादित करें",

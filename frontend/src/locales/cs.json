@@ -1238,6 +1238,7 @@
     "multiInstitutionLink_many": "{{provider}} · {{count}} instituce",
     "multiInstitutionLink_other": "{{provider}} · {{count}} institucí",
     "sync": "Synchronizovat",
+    "retrySync": "Znovu zkoušet synchronizaci",
     "disconnect": "Odpojit",
     "addManual": "Přidat účet",
     "editAccount": "Upravit účet",

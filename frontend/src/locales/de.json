@@ -1167,6 +1167,7 @@
     "multiInstitutionLink_one": "{{provider}} · {{count}} Institut",
     "multiInstitutionLink_other": "{{provider}} · {{count}} Institute",
     "sync": "Synchronisieren",
+    "retrySync": "Synchronisierung erneut versuchen",
     "disconnect": "Trennen",
     "addManual": "Konto hinzufügen",
     "editAccount": "Konto bearbeiten",
