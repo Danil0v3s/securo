@@ -937,6 +937,7 @@
     "recurringUnlinkSuccess": "Transação desvinculada da conta recorrente",
     "transfer": "Transferência",
     "pending": "Pendente",
+    "postToday": "Marcar como registada hoje",
     "recurringInfo": "Transação recorrente ({{frequency}}). Próxima: {{next}}",
     "from": "De",
     "to": "Até",

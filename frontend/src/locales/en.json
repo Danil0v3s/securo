@@ -935,6 +935,7 @@
     "recurringUnlinkSuccess": "Transaction unlinked from the recurring bill",
     "transfer": "Transfer",
     "pending": "Pending",
+    "postToday": "Mark as posted today",
     "recurringInfo": "Recurring transaction ({{frequency}}). Next: {{next}}",
     "from": "From",
     "to": "To",

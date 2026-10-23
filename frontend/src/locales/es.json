@@ -937,6 +937,7 @@
     "recurringUnlinkSuccess": "Transacción desvinculada de la factura recurrente",
     "transfer": "Transferencia",
     "pending": "Pendiente",
+    "postToday": "Marcar como contabilizada hoy",
     "recurringInfo": "Transacción recurrente ({{frequency}}). Próxima: {{next}}",
     "from": "Desde",
     "to": "Hasta",

@@ -935,6 +935,7 @@
     "recurringUnlinkSuccess": "लेन-देन आवर्ती बिल से हटाया गया",
     "transfer": "ट्रांसफ़र",
     "pending": "लंबित",
+    "postToday": "आज पोस्ट की गई के रूप में चिह्नित करें",
     "recurringInfo": "आवर्ती लेन-देन ({{frequency}})। अगला: {{next}}",
     "from": "से",
     "to": "को",

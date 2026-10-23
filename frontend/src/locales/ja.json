@@ -935,6 +935,7 @@
     "recurringUnlinkSuccess": "取引を定期支払いから紐付け解除しました",
     "transfer": "振替",
     "pending": "保留中",
+    "postToday": "本日確定済みとしてマーク",
     "recurringInfo": "定期取引({{frequency}})。次回: {{next}}",
     "from": "from",
     "to": "to",

@@ -621,6 +621,10 @@ export const transactions = {
     const { data } = await api.patch(`/transactions/${id}/unlink-recurring`)
     return data
   },
+  postToday: async (id: string): Promise<Transaction> => {
+    const { data } = await api.post(`/transactions/${id}/post-today`)
+    return data
+  },
   createTransfer: async (transfer: {
     from_account_id: string
     to_account_id: string

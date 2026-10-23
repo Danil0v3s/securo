@@ -937,6 +937,7 @@
     "recurringUnlinkSuccess": "Transazione scollegata dalla spesa ricorrente",
     "transfer": "Trasferimento",
     "pending": "In sospeso",
+    "postToday": "Segna come registrata oggi",
     "recurringInfo": "Transazione ricorrente ({{frequency}}). Prossima: {{next}}",
     "from": "Da",
     "to": "A",

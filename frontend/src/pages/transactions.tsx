@@ -57,6 +57,7 @@ import { CategoryIcon } from '@/components/category-icon'
 import { CategorySelect } from '@/components/category-select'
 import { CategoryPicker } from '@/components/category-picker'
 import { TransactionDialog, type SaveAction, type TransactionSavePayload } from '@/components/transaction-dialog'
+import { PostTodayButton } from '@/components/post-today-button'
 import { extractApiError } from '@/lib/api-errors'
 import { refreshTransactionsView } from '@/lib/transactions-refresh'
 import { TransactionsColumnPicker } from '@/components/transactions-column-picker'
@@ -574,6 +575,17 @@ export default function TransactionsPage() {
       setDialogOpen(false)
       setEditingTx(null)
       toast.success(t('transactions.deleted'))
+    },
+    onError: (error) => {
+      toast.error(extractApiError(error))
+    },
+  })
+
+  const postTodayMutation = useMutation({
+    mutationFn: (id: string) => transactions.postToday(id),
+    onSuccess: () => {
+      invalidateAfterTxMutation()
+      toast.success(t('transactions.updated'))
     },
     onError: (error) => {
       toast.error(extractApiError(error))
@@ -1213,6 +1225,13 @@ export default function TransactionsPage() {
                 <Clock size={12} className="text-amber-500" role="img" aria-label={t('transactions.pending')} />
               </span>
             )}
+            <PostTodayButton
+              id={tx.id}
+              status={tx.status}
+              source={tx.source}
+              canWrite={canWrite}
+              onPostToday={(id) => postTodayMutation.mutate(id)}
+            />
             {(tx.attachment_count ?? 0) > 0 && (
               <Paperclip size={12} className="text-muted-foreground shrink-0" />
             )}

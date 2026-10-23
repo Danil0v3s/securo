@@ -935,6 +935,7 @@
     "recurringUnlinkSuccess": "Transactie ontkoppeld van de terugkerende factuur",
     "transfer": "Overdracht",
     "pending": "In behandeling",
+    "postToday": "Markeer als vandaag geboekt",
     "recurringInfo": "Terugkerende transactie ({{frequency}}). Volgende: {{next}}",
     "from": "Van",
     "to": "Aan",

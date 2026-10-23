@@ -935,6 +935,7 @@
     "recurringUnlinkSuccess": "Transaktion von der wiederkehrenden Rechnung getrennt",
     "transfer": "Umbuchung",
     "pending": "Ausstehend",
+    "postToday": "Als heute verbucht markieren",
     "recurringInfo": "Wiederkehrende Transaktion ({{frequency}}). Nächste: {{next}}",
     "from": "Von",
     "to": "Nach",

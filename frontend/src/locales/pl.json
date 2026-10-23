@@ -949,6 +949,7 @@
     "recurringUnlinkSuccess": "Transakcja odłączona od cyklicznego rachunku",
     "transfer": "Transfer",
     "pending": "Oczekująca",
+    "postToday": "Oznacz jako rozliczoną dzisiaj",
     "recurringInfo": "Transakcja cykliczna ({{frequency}}). Następna: {{next}}",
     "from": "Z",
     "to": "Do",

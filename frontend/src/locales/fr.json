@@ -937,6 +937,7 @@
     "recurringUnlinkSuccess": "Transaction dissociée de la facture récurrente",
     "transfer": "Virement",
     "pending": "En attente",
+    "postToday": "Marquer comme postée aujourd'hui",
     "recurringInfo": "Transaction récurrente ({{frequency}}). Prochaine : {{next}}",
     "from": "De",
     "to": "À",

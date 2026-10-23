@@ -951,6 +951,7 @@
     "recurringUnlinkSuccess": "Transakcia odpojená od opakovanej platby",
     "transfer": "Prevod",
     "pending": "Čakajúca",
+    "postToday": "Označiť ako evidované dnes",
     "recurringInfo": "Opakovaná transakcia ({{frequency}}). Ďalšia: {{next}}",
     "from": "Od",
     "to": "Do",

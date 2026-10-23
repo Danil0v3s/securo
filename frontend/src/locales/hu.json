@@ -935,6 +935,7 @@
     "recurringUnlinkSuccess": "Tranzakció leválasztva az ismétlődő tételről",
     "transfer": "Átvezetés",
     "pending": "Függőben",
+    "postToday": "Jelölés ma elkönyveltként",
     "recurringInfo": "Ismétlődő tranzakció ({{frequency}}). Következő: {{next}}",
     "from": "Innen",
     "to": "Ide",
