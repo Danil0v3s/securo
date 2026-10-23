@@ -384,6 +384,18 @@ describe('Reports page: month presets and period navigation (issue #519)', () =>
     expect(screen.getByTestId('reports-period-label')).toHaveTextContent('Aug 2025 - Feb 2026')
   })
 
+  it('does not carry a stepped window into the Cash Flow forecast', async () => {
+    const { user } = renderWithProviders(<ReportsPage />)
+    await screen.findByRole('heading', { name: 'Net Worth' })
+    await user.click(screen.getByRole('button', { name: '6M' }))
+    await user.click(screen.getByRole('button', { name: 'Previous period' }))
+
+    await user.click(screen.getByRole('button', { name: t('reports.cashFlow') }))
+    await waitFor(() => expect(api.reports.cashFlow).toHaveBeenCalled())
+
+    expect(api.reports.cashFlow.mock.calls.at(-1)?.[0]).toBe(6)
+  })
+
   it('hides period navigation on the forward-only Cash Flow tab', async () => {
     const { user } = renderWithProviders(<ReportsPage />)
     await screen.findByRole('heading', { name: 'Net Worth' })

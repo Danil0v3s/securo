@@ -296,7 +296,11 @@ export default function ReportsPage() {
         : selectedRange.days
           ? { kind: 'days', days: selectedRange.days }
           : { kind: 'rolling', months: selectedRange.months }
-  const navWindow = periodWindow(periodPreset, todayInTimezone(timeZone), periodOffset, { from: customFrom, to: customTo })
+  // Cash Flow is a forward projection with no period navigation: it never
+  // takes a stepped window, even if an offset was carried over from another tab.
+  const navWindow = isCashFlow
+    ? null
+    : periodWindow(periodPreset, todayInTimezone(timeZone), periodOffset, { from: customFrom, to: customTo })
   // In custom mode, translate the picked span into an equivalent `months`
   // value so downstream logic (interval bucketing, forecast fan-out) keeps
   // working. Backend uses start_date/end_date directly when they're set.
@@ -341,7 +345,7 @@ export default function ReportsPage() {
     if (remembered) {
       setRangeKey(remembered.rangeKey)
       setInterval(remembered.interval)
-      setPeriodOffset(remembered.periodOffset ?? 0)
+      setPeriodOffset(nextTab.key === 'cash_flow' ? 0 : (remembered.periodOffset ?? 0))
       if (remembered.rangeKey === CUSTOM_RANGE_KEY) {
         setCustomFrom(remembered.from)
         setCustomTo(remembered.to)
@@ -354,6 +358,8 @@ export default function ReportsPage() {
       nextTab.rangeOptions.some((r) => r.key === rangeKey)
     if (!stillValid) {
       setRangeKey(nextTab.fallbackRangeKey)
+      setPeriodOffset(0)
+    } else if (nextTab.key === 'cash_flow') {
       setPeriodOffset(0)
     }
     if (!nextTab.intervalOptions.some((i) => i.value === interval)) {
