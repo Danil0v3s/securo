@@ -184,3 +184,22 @@ describe('Dashboard available balance without an FX rate', () => {
     expect(screen.queryByText(t('transactions.fxFallbackBanner'))).not.toBeInTheDocument()
   })
 })
+
+describe('Dashboard refresh button', () => {
+  it('refetches page data when the refresh button is clicked', async () => {
+    const { user, queryClient } = renderWithProviders(
+      <TooltipProvider delayDuration={0}>
+        <DashboardPage />
+      </TooltipProvider>,
+    )
+
+    const refetch = vi.spyOn(queryClient, 'refetchQueries')
+
+    const button = screen.getByRole('button', { name: 'Refresh' })
+    await user.click(button)
+
+    expect(refetch).toHaveBeenCalledTimes(1)
+    // Only the queries on screen: a refresh must not refetch every page visited earlier.
+    expect(refetch).toHaveBeenCalledWith({ type: 'active' })
+  })
+})
