@@ -184,3 +184,8 @@ async def test_list_accounts_shared_line_open_bill_foreign_currency(
     assert card_row["open_bill_total_primary"] == pytest.approx(1000.0)
     assert card_row["balance_primary"] == pytest.approx(-500.0)
     assert card_row["fx_fallback"] is False
+
+    # The single-account route converts the same way as the list.
+    single = (await client.get(f"/api/accounts/{card.id}", headers=auth_headers)).json()
+    assert single["open_bill_total_primary"] == pytest.approx(1000.0)
+    assert single["balance_primary"] == pytest.approx(-500.0)
