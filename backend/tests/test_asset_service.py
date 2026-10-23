@@ -1021,3 +1021,38 @@ async def test_get_assets_excludes_archived_by_default(session: AsyncSession, te
     names = [a.name for a in assets]
     assert "Visible" in names
     assert "Archived" not in names
+
+
+@pytest.mark.asyncio
+async def test_portfolio_trend_total_keeps_sub_cent_foreign_assets(
+    session: AsyncSession, test_user: User, test_workspace,
+):
+    """Low-priced foreign-currency holdings must add up in the trend total.
+
+    Three coins at 0.0008 USD convert to 0.004 BRL each. Rounding every
+    holding to two decimals before summing made each one 0.00, so the
+    portfolio total was 0.0; summing first gives 0.012, shown as 0.01.
+    """
+    today = date.today()
+    session.add(FxRate(
+        id=uuid.uuid4(), base_currency="USD", quote_currency="BRL",
+        date=today, rate=Decimal("5.0"), source="test",
+    ))
+    for i in range(3):
+        coin = Asset(
+            id=uuid.uuid4(), user_id=test_user.id, name=f"Coin {i}",
+            type="investment", currency="USD", valuation_method="market_price",
+            units=Decimal("1"), last_price=Decimal("0.0008"), position=i,
+        )
+        session.add(coin)
+        await session.flush()
+        session.add(AssetValue(
+            id=uuid.uuid4(), asset_id=coin.id,
+            amount=Decimal("0.0008"), date=today, source="sync",
+        ))
+    await session.commit()
+
+    result = await get_portfolio_trend(session, test_workspace.id, test_user.id)
+
+    assert result["trend"][-1]["_total"] == pytest.approx(0.01)
+    assert result["total"] == pytest.approx(0.01)

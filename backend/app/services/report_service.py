@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.app_clock import app_today
 from app.core.config import get_settings
 from app.models.account import Account
-from app.models.asset import Asset
+from app.models.asset import ASSET_PRICE_DECIMALS, Asset
 from app.models.asset_value import AssetValue
 from app.models.transaction import Transaction
 from app.models.category import Category
@@ -123,7 +123,8 @@ async def _asset_value_at(
             amount = 0.0
         if amount > 0:
             converted, _ = await convert(
-                session, Decimal(str(amount)), asset.currency, primary_currency, cutoff
+                session, Decimal(str(amount)), asset.currency, primary_currency, cutoff,
+                decimals=ASSET_PRICE_DECIMALS,
             )
             total += float(converted)
     return total
@@ -228,10 +229,11 @@ async def _net_worth_at(
             amount = 0.0
         if amount > 0:
             converted, _ = await convert(
-                session, Decimal(str(amount)), asset.currency, primary_currency, cutoff
+                session, Decimal(str(amount)), asset.currency, primary_currency, cutoff,
+                decimals=ASSET_PRICE_DECIMALS,
             )
             converted_val = round(float(converted), 2)
-            assets_total += converted_val
+            assets_total += float(converted)
             composition.append(ReportCompositionItem(
                 key=str(asset.id),
                 label=asset.name,

@@ -2962,3 +2962,41 @@ def test_custom_range_guard_follows_resolved_timezone():
             with pytest.raises(HTTPException) as exc:
                 _resolve_custom_range(zone_today, host_today)
             assert exc.value.detail == "end_date must be on or before today"
+
+
+@pytest.mark.asyncio
+async def test_net_worth_keeps_sub_cent_foreign_assets(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Low-priced foreign-currency holdings must add up in the net worth.
+
+    Three coins at 0.0008 USD convert to 0.004 BRL each. A two-decimal
+    conversion made each one 0.00; converting at price precision and
+    summing first gives 0.012, shown as 0.01.
+    """
+    from app.models.fx_rate import FxRate
+
+    today = date.today()
+    session.add(FxRate(
+        id=uuid.uuid4(), base_currency="USD", quote_currency="BRL",
+        date=today, rate=Decimal("5.0"), source="test",
+    ))
+    for i in range(3):
+        coin = Asset(
+            id=uuid.uuid4(), user_id=test_user.id, name=f"Coin {i}",
+            type="investment", currency="USD", valuation_method="market_price",
+            units=Decimal("1"), last_price=Decimal("0.0008"), position=i,
+        )
+        session.add(coin)
+        await session.flush()
+        session.add(AssetValue(
+            id=uuid.uuid4(), asset_id=coin.id,
+            amount=Decimal("0.0008"), date=today, source="sync",
+        ))
+    await session.commit()
+
+    total = await _asset_value_at(session, test_workspace.id, today, "BRL")
+    assert total == pytest.approx(0.012)
+
+    point = await _net_worth_at(session, test_workspace.id, today, "BRL")
+    assert point.breakdowns["assets"] == pytest.approx(0.01)
