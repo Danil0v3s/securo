@@ -131,6 +131,7 @@
     "groupAgents": "AI",
     "agents": "Agents",
     "aiAgents": "AI Agents",
+    "documentation": "Documentation",
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar"
   },

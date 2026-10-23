@@ -131,6 +131,7 @@
     "groupAgents": "IA",
     "agents": "Agents",
     "aiAgents": "Agents IA",
+    "documentation": "Documentation",
     "collapseSidebar": "Réduire la barre latérale",
     "expandSidebar": "Développer la barre latérale"
   },

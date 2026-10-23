@@ -131,6 +131,7 @@
     "groupAgents": "KI",
     "agents": "Agenten",
     "aiAgents": "KI-Agenten",
+    "documentation": "Dokumentation",
     "collapseSidebar": "Seitenleiste einklappen",
     "expandSidebar": "Seitenleiste ausklappen"
   },

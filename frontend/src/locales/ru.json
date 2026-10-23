@@ -131,6 +131,7 @@
     "groupAgents": "ИИ",
     "agents": "Агенты",
     "aiAgents": "ИИ-агенты",
+    "documentation": "Документация",
     "collapseSidebar": "Свернуть боковую панель",
     "expandSidebar": "Развернуть боковую панель"
   },

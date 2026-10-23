@@ -131,6 +131,7 @@
     "groupAgents": "AI",
     "agents": "Βοηθοί",
     "aiAgents": "Βοηθοί AI",
+    "documentation": "Τεκμηρίωση",
     "collapseSidebar": "Σύμπτυξη πλευρικής γραμμής",
     "expandSidebar": "Ανάπτυξη πλευρικής γραμμής"
   },

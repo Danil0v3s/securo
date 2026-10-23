@@ -131,6 +131,7 @@
     "groupAgents": "AI",
     "agents": "エージェント",
     "aiAgents": "AIエージェント",
+    "documentation": "ドキュメント",
     "collapseSidebar": "サイドバーを折りたたむ",
     "expandSidebar": "サイドバーを展開する"
   },
