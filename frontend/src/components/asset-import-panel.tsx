@@ -230,7 +230,7 @@ export function AssetImportPanel() {
               {needsMapping ? t('assetImport.mapPrompt') : t('assetImport.columnMapping')}
             </span>
             {!needsMapping && mappingSummary && (
-              <span className="hidden min-w-0 truncate text-xs text-muted-foreground/70 md:inline">
+              <span className="min-w-0 truncate text-xs text-muted-foreground/70">
                 {mappingSummary}
               </span>
             )}
@@ -413,7 +413,7 @@ export function AssetImportPanel() {
                 <X size={14} className="mr-1" />
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleImport} disabled={importing || importable === 0} className="gap-2">
+              <Button onClick={handleImport} disabled={importing || loading || importable === 0} className="gap-2">
                 <Upload size={14} />
                 {importing ? t('assetImport.importing') : t('assetImport.confirm', { count: importable })}
               </Button>

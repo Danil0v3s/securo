@@ -176,4 +176,23 @@ describe('AssetImportPanel column mapping', () => {
       })
     })
   })
+
+  it('blocks the import until the re-mapped preview comes back', async () => {
+    api.previewImport.mockResolvedValueOnce(successPreview)
+    const rendered = renderWithProviders(<AssetImportPanel />)
+    const { user } = rendered
+    await uploadFile(rendered)
+    const confirm = await screen.findByRole('button', { name: t('assetImport.confirm', { count: 2 }) })
+    expect(confirm).toBeEnabled()
+
+    // The next preview hangs: the orders on screen still come from the old mapping.
+    let settle: (value: AssetImportPreview) => void = () => {}
+    api.previewImport.mockImplementationOnce(() => new Promise((resolve) => { settle = resolve }))
+    await user.click(screen.getByRole('button', { name: /Column mapping/ }))
+    await user.selectOptions(await screen.findByRole('combobox', { name: /Quantity/i }), 'Comm')
+
+    await waitFor(() => expect(confirm).toBeDisabled())
+    settle(successPreview)
+    await waitFor(() => expect(confirm).toBeEnabled())
+  })
 })
