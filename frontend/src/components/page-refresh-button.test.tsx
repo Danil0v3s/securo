@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { PageRefreshButton } from '@/components/page-refresh-button'
@@ -24,5 +24,18 @@ describe('PageRefreshButton', () => {
     const button = screen.getByRole('button', { name: 'Refresh' })
     expect(button).toBeDisabled()
     expect(button.querySelector('.animate-spin')).not.toBeNull()
+  })
+
+  it('stays busy until the refetch it started settles', async () => {
+    let settle: () => void = () => {}
+    const onRefresh = vi.fn(() => new Promise<void>((resolve) => { settle = resolve }))
+
+    const { user } = renderWithProviders(<PageRefreshButton onRefresh={onRefresh} />)
+    const button = screen.getByRole('button', { name: 'Refresh' })
+    await user.click(button)
+
+    expect(button).toBeDisabled()
+    settle()
+    await waitFor(() => expect(button).toBeEnabled())
   })
 })
