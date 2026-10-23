@@ -53,6 +53,9 @@ async def list_accounts(
             else:
                 converted = Decimal(str(acc["current_balance"])) * rate
                 acc["balance_primary"] = float(converted.quantize(Decimal("0.01")))
+                if acc["open_bill_total"] is not None:
+                    bill = Decimal(str(acc["open_bill_total"])) * rate
+                    acc["open_bill_total_primary"] = float(bill.quantize(Decimal("0.01")))
     return accounts
 
 

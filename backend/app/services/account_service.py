@@ -3,7 +3,17 @@ from datetime import date as _Date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import ColumnElement, Select, case, delete, func, select, or_, update
+from sqlalchemy import (
+    ColumnElement,
+    Select,
+    and_,
+    case,
+    delete,
+    func,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
@@ -141,11 +151,35 @@ def _balance_subqueries(today: _Date):
         .subquery()
     )
 
-    return balance_sq, prev_balance_sq, future_charges_sq
+    # Subquery: the open bill of each card on a shared credit line (earliest
+    # due_date on or after today; one row per account via rn = 1). Every card
+    # on one consolidated line repeats the contract-wide balance, so the
+    # sidebar shows the card's own bill instead (issue #684).
+    open_bill_sq = (
+        select(
+            CreditCardBill.account_id,
+            CreditCardBill.total_amount,
+            func.row_number()
+            .over(
+                partition_by=CreditCardBill.account_id,
+                order_by=CreditCardBill.due_date,
+            )
+            .label("rn"),
+        )
+        .join(Account, CreditCardBill.account_id == Account.id)
+        .where(
+            Account.type == "credit_card",
+            Account.shared_balance_group.isnot(None),
+            CreditCardBill.due_date >= today,
+        )
+        .subquery()
+    )
+
+    return balance_sq, prev_balance_sq, future_charges_sq, open_bill_sq
 
 
 def _accounts_with_balances_query(
-    workspace_id: uuid.UUID, balance_sq, prev_balance_sq, future_charges_sq
+    workspace_id: uuid.UUID, balance_sq, prev_balance_sq, future_charges_sq, open_bill_sq
 ):
     return (
         select(
@@ -154,6 +188,7 @@ def _accounts_with_balances_query(
             func.coalesce(balance_sq.c.current_balance, 0).label("current_balance"),
             func.coalesce(prev_balance_sq.c.previous_balance, 0).label("previous_balance"),
             func.coalesce(future_charges_sq.c.future_charges, 0).label("future_charges"),
+            open_bill_sq.c.total_amount.label("open_bill_total"),
             # The opening balance's date, so the edit form can show it and
             # leave it alone (issue #1204).
             select(func.min(Transaction.date))
@@ -169,6 +204,10 @@ def _accounts_with_balances_query(
         .outerjoin(balance_sq, Account.id == balance_sq.c.account_id)
         .outerjoin(prev_balance_sq, Account.id == prev_balance_sq.c.account_id)
         .outerjoin(future_charges_sq, Account.id == future_charges_sq.c.account_id)
+        .outerjoin(
+            open_bill_sq,
+            and_(Account.id == open_bill_sq.c.account_id, open_bill_sq.c.rn == 1),
+        )
         .where(
             or_(
                 Account.workspace_id == workspace_id,
@@ -191,6 +230,7 @@ async def get_accounts(session: AsyncSession, workspace_id: uuid.UUID, include_c
                 previous_balance,
                 connection,
                 future_charges=future_charges,
+                open_bill_total=open_bill_total,
                 balance_date=balance_date,
             )
             for (
@@ -199,6 +239,7 @@ async def get_accounts(session: AsyncSession, workspace_id: uuid.UUID, include_c
                 current_balance,
                 previous_balance,
                 future_charges,
+                open_bill_total,
                 balance_date,
             ) in result.all()
         ]
@@ -214,13 +255,14 @@ async def get_account_with_balances(
     row = (await session.execute(query)).first()
     if row is None:
         return None
-    acc, connection, current_balance, previous_balance, future_charges, balance_date = row
+    acc, connection, current_balance, previous_balance, future_charges, open_bill_total, balance_date = row
     return serialize_account(
         acc,
         current_balance,
         previous_balance,
         connection,
         future_charges=future_charges,
+        open_bill_total=open_bill_total,
         balance_date=balance_date,
     )
 
@@ -254,6 +296,7 @@ def serialize_account(
     connection: Optional[BankConnection] = None,
     *,
     future_charges: Optional[Decimal] = None,
+    open_bill_total: Optional[Decimal] = None,
     balance_date: Optional[_Date] = None,
 ) -> dict:
     # Connected CC: provider stores positive for debt → negate.
@@ -287,6 +330,10 @@ def serialize_account(
         "card_brand": acc.card_brand,
         "card_level": acc.card_level,
         "shared_balance_group": acc.shared_balance_group,
+        # The card's own open bill, when it sits on a shared credit line.
+        # Null for every other account and for shared cards without one.
+        "open_bill_total": float(open_bill_total) if open_bill_total is not None else None,
+        "open_bill_total_primary": None,
         "institution_name": institution_name,
         "institution_logo_url": institution_logo_url,
         "balance_date": balance_date,
