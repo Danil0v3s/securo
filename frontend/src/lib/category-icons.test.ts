@@ -19,9 +19,9 @@ const LOCALES_DIR = path.resolve(
   '../locales',
 )
 
-function makeT(lng: string, resources: Resource) {
+function makeT(lng: string, resources: Resource, fallbackLng: string | false = false) {
   const instance = i18next.createInstance()
-  instance.init({ lng, resources, fallbackLng: false, initImmediate: false })
+  instance.init({ lng, resources, fallbackLng, initImmediate: false })
   return instance.t
 }
 
@@ -73,7 +73,13 @@ describe('getCategoryIconLabel', () => {
     expect(getCategoryIconLabel(t, 'heart')).toBe('Saúde / Bem-estar')
   })
 
-  it('falls back to the Portuguese label when the locale has no key', () => {
+  it('uses the app fallback language when the locale has no key', () => {
+    // Same fallbackLng as the app (lib/i18n.ts).
+    const t = makeT('de', { de: { translation: {} }, en: { translation: en } }, 'en')
+    expect(getCategoryIconLabel(t, 'heart')).toBe('Health / Wellbeing')
+  })
+
+  it('falls back to the Portuguese label when no language has the key', () => {
     const t = makeT('de', { de: { translation: {} } })
     expect(getCategoryIconLabel(t, 'heart')).toBe('Saúde / Bem-estar')
   })

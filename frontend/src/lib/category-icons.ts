@@ -129,8 +129,9 @@ export const ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
 )
 
 // Icon labels follow the active UI language: tooltips and the picker search
-// read the translation, with the Portuguese label as fallback so a missing
-// key never blanks a tooltip or hides an icon from search.
+// read the translation. A locale without the key gets the app's fallback
+// language through i18next (English); the Portuguese label is the last resort,
+// so a missing key never blanks a tooltip or hides an icon from search.
 export function getCategoryIconLabel(t: TFunction, name: string): string {
   const key = `categoryIcons.${name}`
   const translated = t(key)
