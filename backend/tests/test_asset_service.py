@@ -1029,9 +1029,9 @@ async def test_portfolio_trend_total_keeps_sub_cent_foreign_assets(
 ):
     """Low-priced foreign-currency holdings must add up in the trend total.
 
-    Three coins at 0.0008 USD convert to 0.004 BRL each. Rounding every
-    holding to two decimals before summing made each one 0.00, so the
-    portfolio total was 0.0; summing first gives 0.012, shown as 0.01.
+    Three coins at 0.001 USD convert to 0.005 BRL each. Rounding every
+    holding to two decimals before summing lost them; summing first in
+    Decimal gives 0.015, shown as 0.02. A float sum would round it to 0.01.
     """
     today = date.today()
     session.add(FxRate(
@@ -1042,17 +1042,17 @@ async def test_portfolio_trend_total_keeps_sub_cent_foreign_assets(
         coin = Asset(
             id=uuid.uuid4(), user_id=test_user.id, name=f"Coin {i}",
             type="investment", currency="USD", valuation_method="market_price",
-            units=Decimal("1"), last_price=Decimal("0.0008"), position=i,
+            units=Decimal("1"), last_price=Decimal("0.001"), position=i,
         )
         session.add(coin)
         await session.flush()
         session.add(AssetValue(
             id=uuid.uuid4(), asset_id=coin.id,
-            amount=Decimal("0.0008"), date=today, source="sync",
+            amount=Decimal("0.001"), date=today, source="sync",
         ))
     await session.commit()
 
     result = await get_portfolio_trend(session, test_workspace.id, test_user.id)
 
-    assert result["trend"][-1]["_total"] == pytest.approx(0.01)
-    assert result["total"] == pytest.approx(0.01)
+    assert result["trend"][-1]["_total"] == pytest.approx(0.02)
+    assert result["total"] == pytest.approx(0.02)

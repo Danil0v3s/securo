@@ -947,7 +947,7 @@ async def get_portfolio_trend(
 
     for d in sorted_dates:
         row: dict[str, object] = {"date": d.isoformat()}
-        date_total = 0.0
+        date_total = Decimal("0")
         for aid in [a["id"] for a in asset_meta]:
             if d in value_lookup[aid]:
                 last_known[aid] = value_lookup[aid][d]
@@ -969,15 +969,15 @@ async def get_portfolio_trend(
                     session, Decimal(str(native)), currency, primary_currency, d,
                     decimals=ASSET_PRICE_DECIMALS,
                 )
-                val = float(converted)
+                val = converted
             else:
-                val = native
+                val = Decimal(str(native))
 
             # Each series point is shown in monetary decimals, but the total
             # sums the unrounded values so sub-cent holdings still add up.
-            row[aid] = round(val, 2)
+            row[aid] = round(float(val), 2)
             date_total += val
-        row["_total"] = round(date_total, 2)
+        row["_total"] = float(date_total.quantize(Decimal("0.01")))
         trend.append(row)
 
     # The header total matches the last row's _total — both use the same
