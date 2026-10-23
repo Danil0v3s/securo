@@ -1864,6 +1864,8 @@
     "noWallet": "Bez peňaženky",
     "reading": "Načítava sa súbor…",
     "mapPrompt": "Nepodarilo sa rozpoznať, ktorý stĺpec je ktorý. Priraď každému poľu stĺpec z tvojho súboru.",
+    "columnMapping": "Mapovanie stĺpcov",
+    "adjustMapping": "Upraviť stĺpce",
     "ignoreColumn": "Ignorovať",
     "previewError": "Súbor sa nepodarilo prečítať",
     "importError": "Pokyny sa nepodarilo importovať",

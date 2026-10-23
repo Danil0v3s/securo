@@ -1750,6 +1750,8 @@
     "noWallet": "Geen portemonnee",
     "reading": "Het bestand lezen…",
     "mapPrompt": "We konden niet zeggen welke kolom welke is. Wijs elk veld naar een kolom uit uw bestand.",
+    "columnMapping": "Kolomtoewijzing",
+    "adjustMapping": "Kolommen aanpassen",
     "ignoreColumn": "Negeer",
     "previewError": "Kon dat bestand niet lezen",
     "importError": "Kan de bestellingen niet importeren",

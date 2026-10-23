@@ -1837,6 +1837,8 @@
     "noWallet": "Bez portfela",
     "reading": "Wczytywanie pliku…",
     "mapPrompt": "Nie rozpoznaliśmy kolumn. Przypisz każde pole do kolumny z pliku.",
+    "columnMapping": "Mapowanie kolumn",
+    "adjustMapping": "Dopasuj kolumny",
     "ignoreColumn": "Pomiń",
     "previewError": "Nie udało się odczytać pliku",
     "importError": "Nie udało się zaimportować zleceń",

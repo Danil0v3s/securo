@@ -1748,6 +1748,8 @@
     "noWallet": "ウォレットなし",
     "reading": "ファイルを読み込み中…",
     "mapPrompt": "どの列がどの項目か判別できませんでした。各項目をファイルの列に対応させてください。",
+    "columnMapping": "列のマッピング",
+    "adjustMapping": "列を調整する",
     "ignoreColumn": "無視",
     "previewError": "そのファイルを読み込めませんでした",
     "importError": "注文をインポートできませんでした",

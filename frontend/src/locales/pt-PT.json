@@ -1752,6 +1752,8 @@
     "noWallet": "Sem carteira",
     "reading": "A ler o ficheiro…",
     "mapPrompt": "Não foi possível identificar as colunas. Aponte cada campo para uma coluna do seu ficheiro.",
+    "columnMapping": "Mapeamento de colunas",
+    "adjustMapping": "Ajustar colunas",
     "ignoreColumn": "Ignorar",
     "previewError": "Não foi possível ler esse ficheiro",
     "importError": "Não foi possível importar as ordens",

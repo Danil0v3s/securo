@@ -1749,6 +1749,8 @@
     "noWallet": "Kein Depot",
     "reading": "Datei wird gelesen…",
     "mapPrompt": "Die Spalten konnten nicht erkannt werden. Ordnen Sie jedem Feld eine Spalte zu.",
+    "columnMapping": "Spaltenzuordnung",
+    "adjustMapping": "Spalten anpassen",
     "ignoreColumn": "Ignorieren",
     "previewError": "Datei konnte nicht gelesen werden",
     "importError": "Orders konnten nicht importiert werden",

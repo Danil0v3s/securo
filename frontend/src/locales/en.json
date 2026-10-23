@@ -1748,6 +1748,8 @@
     "noWallet": "No wallet",
     "reading": "Reading the file…",
     "mapPrompt": "We could not tell which column is which. Point each field at a column from your file.",
+    "columnMapping": "Column mapping",
+    "adjustMapping": "Adjust column mapping",
     "ignoreColumn": "Ignore",
     "previewError": "Could not read that file",
     "importError": "Could not import the orders",

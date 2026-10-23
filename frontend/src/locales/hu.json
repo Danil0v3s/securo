@@ -1748,6 +1748,8 @@
     "noWallet": "Nincs tárca",
     "reading": "Fájl beolvasása…",
     "mapPrompt": "Nem tudtuk megállapítani, melyik oszlop mit tartalmaz. Rendelj minden mezőhöz egy oszlopot a fájlodból.",
+    "columnMapping": "Oszlop-társítás",
+    "adjustMapping": "Oszlopok igazítása",
     "ignoreColumn": "Kihagyás",
     "previewError": "Nem sikerült beolvasni a fájlt",
     "importError": "Nem sikerült importálni a megbízásokat",

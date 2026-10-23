@@ -1752,6 +1752,8 @@
     "noWallet": "Aucun portefeuille",
     "reading": "Lecture du fichier…",
     "mapPrompt": "Impossible d'identifier les colonnes. Associez chaque champ à une colonne de votre fichier.",
+    "columnMapping": "Correspondance des colonnes",
+    "adjustMapping": "Ajuster les colonnes",
     "ignoreColumn": "Ignorer",
     "previewError": "Impossible de lire ce fichier",
     "importError": "Impossible d'importer les ordres",

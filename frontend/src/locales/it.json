@@ -1752,6 +1752,8 @@
     "noWallet": "Nessun portafoglio",
     "reading": "Lettura del file…",
     "mapPrompt": "Non siamo riusciti a riconoscere le colonne. Associa ogni campo a una colonna del file.",
+    "columnMapping": "Corrispondenza colonne",
+    "adjustMapping": "Regola le colonne",
     "ignoreColumn": "Ignora",
     "previewError": "Impossibile leggere il file",
     "importError": "Impossibile importare gli ordini",

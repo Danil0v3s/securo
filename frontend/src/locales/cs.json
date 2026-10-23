@@ -1880,6 +1880,8 @@
     "noWallet": "Bez peněženky",
     "reading": "Načítá se soubor…",
     "mapPrompt": "Nepodařilo se rozpoznat, který sloupec je který. Přiřaďte každému poli sloupec ze svého souboru.",
+    "columnMapping": "Mapování sloupců",
+    "adjustMapping": "Upravit sloupce",
     "ignoreColumn": "Ignorovat",
     "previewError": "Soubor se nepodařilo přečíst",
     "importError": "Pokyny se nepodařilo importovat",

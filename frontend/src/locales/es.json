@@ -1752,6 +1752,8 @@
     "noWallet": "Sin cartera",
     "reading": "Leyendo el archivo…",
     "mapPrompt": "No pudimos identificar las columnas. Asigna cada campo a una columna de tu archivo.",
+    "columnMapping": "Mapeo de columnas",
+    "adjustMapping": "Ajustar columnas",
     "ignoreColumn": "Ignorar",
     "previewError": "No se pudo leer ese archivo",
     "importError": "No se pudieron importar las órdenes",
