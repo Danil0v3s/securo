@@ -5,6 +5,7 @@ from decimal import Decimal
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.app_clock import app_today
 from app.models.account import Account
 from app.models.category import Category
 from app.models.recurring_transaction import RecurringTransaction
@@ -394,7 +395,7 @@ async def _fund_manual(
     txn = Transaction(
         id=uuid.uuid4(), user_id=user_id, account_id=account_id,
         description="Opening balance", amount=Decimal(str(amount)),
-        date=date.today(), type="credit", source="opening_balance",
+        date=app_today(), type="credit", source="opening_balance",
         currency=currency, status="posted",
     )
     session.add(txn)
@@ -430,6 +431,34 @@ async def test_get_summary_mixed_currency_missing_rate_flags_fallback(
     # Summed at 1:1 (not silently converted) and flagged as an estimate.
     assert summary.total_balance_primary == pytest.approx(150.0)
     assert summary.fx_fallback is True
+
+
+@pytest.mark.asyncio
+async def test_get_summary_zero_foreign_balance_without_rate_is_not_flagged(
+    session: AsyncSession, test_user, test_workspace, monkeypatch
+):
+    """A foreign account at zero needs no rate: the total is exact, so the
+    summary must not be flagged as an estimate (issue #1165)."""
+    from unittest.mock import AsyncMock
+    import app.services.fx_rate_service as fx
+
+    monkeypatch.setattr(fx, "sync_rates", AsyncMock(return_value=0))
+
+    home = await _make_account(session, test_user.id, "Home", currency="BRL")
+    abroad = await _make_account(session, test_user.id, "Abroad", currency="EUR")
+    await _fund_manual(session, test_user.id, home.id, 100.0, "BRL")
+    await _fund_manual(session, test_user.id, abroad.id, 50.0, "EUR")
+    session.add(Transaction(
+        id=uuid.uuid4(), user_id=test_user.id, account_id=abroad.id,
+        description="Spent it all", amount=Decimal("50"), date=app_today(),
+        type="debit", source="manual", currency="EUR", status="posted",
+    ))
+    await session.commit()
+
+    summary = await get_summary(session, test_workspace.id, test_user.id)
+
+    assert summary.total_balance_primary == pytest.approx(100.0)
+    assert summary.fx_fallback is False
 
 
 @pytest.mark.asyncio

@@ -229,6 +229,9 @@ async def _sum_to_primary(
         if currency == primary_currency:
             total += float(amount)
             continue
+        if not amount:
+            # Zero is zero in any currency: no rate needed, nothing estimated.
+            continue
         rate = await _resolve_rate(session, currency, primary_currency, target_date)
         if rate is None:
             fx_fallback = True
