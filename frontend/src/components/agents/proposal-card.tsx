@@ -5,6 +5,8 @@ import { AlertCircle, Check, ChevronDown, ChevronRight, Loader2, Sparkles } from
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { formatDate } from '@/lib/date-range-format'
+import { useDateLocale } from '@/hooks/use-display-locale'
 import {
   budgets,
   categories,
@@ -39,6 +41,7 @@ function persistApplied(toolCallId: string, ref?: string) {
 
 export function ProposalCard({ toolCallId, data }: Props) {
   const { t } = useTranslation()
+  const dateLocale = useDateLocale()
   const qc = useQueryClient()
   const initiallyApplied = loadApplied()[toolCallId]
   const [appliedAt, setAppliedAt] = useState<number | null>(initiallyApplied?.ts ?? null)
@@ -82,7 +85,7 @@ export function ProposalCard({ toolCallId, data }: Props) {
   if (!data.kind) return null
 
   const kind = data.kind
-  const summary = renderSummary(kind, data, t)
+  const summary = renderSummary(kind, data, t, dateLocale)
   const isApplied = appliedAt !== null
 
   return (
@@ -161,7 +164,12 @@ function kindTitle(kind: ProposalKind, t: ReturnType<typeof useTranslation>['t']
   return t(`agents.proposal.kind.${kind}`)
 }
 
-function renderSummary(kind: ProposalKind, d: ProposalData, t: ReturnType<typeof useTranslation>['t']): string {
+function renderSummary(
+  kind: ProposalKind,
+  d: ProposalData,
+  t: ReturnType<typeof useTranslation>['t'],
+  dateLocale: string,
+): string {
   const p = (d.proposed || {}) as Record<string, unknown>
   const tgt = (d.target || {}) as Record<string, unknown>
   switch (kind) {
@@ -238,7 +246,7 @@ function renderSummary(kind: ProposalKind, d: ProposalData, t: ReturnType<typeof
       const to = legs.find((l) => l !== from)
       return t(
         kind === 'link_transfer' ? 'agents.proposal.summary.linkTransfer' : 'agents.proposal.summary.unlinkTransfer',
-        { from: legLabel(from), to: legLabel(to) },
+        { from: legLabel(from, dateLocale), to: legLabel(to, dateLocale) },
       )
     }
     default:
@@ -246,10 +254,10 @@ function renderSummary(kind: ProposalKind, d: ProposalData, t: ReturnType<typeof
   }
 }
 
-function legLabel(leg: TransferLeg | undefined): string {
+function legLabel(leg: TransferLeg | undefined, dateLocale: string): string {
   if (!leg) return '?'
   const parts = [String(leg.account_name ?? leg.description ?? '?'), fmt(leg.amount, leg.currency)]
-  if (leg.date) parts.push(`(${leg.date})`)
+  if (leg.date) parts.push(`(${formatDate(leg.date, dateLocale)})`)
   return parts.join(' ')
 }
 

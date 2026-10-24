@@ -17,6 +17,7 @@ vi.mock('@/lib/api', () => ({
   transactions: { linkTransfer, unlinkTransfer },
 }))
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+vi.mock('@/hooks/use-display-locale', () => ({ useDateLocale: () => 'en-GB' }))
 
 import { ProposalCard } from './proposal-card'
 
@@ -67,7 +68,10 @@ describe('ProposalCard transfer kinds', () => {
 
     expect(screen.getByText('Link as transfer')).toBeInTheDocument()
     const summary = screen.getByText(/Checking .*→ Savings/)
-    expect(summary.textContent).toContain('(2026-10-01)')
+    // Leg dates go through the shared date formatter in the viewer's date
+    // locale, not as the raw ISO string from the tool payload.
+    expect(summary.textContent).toContain('(01 Oct 2026)')
+    expect(summary.textContent).not.toContain('2026-10-01')
 
     await user.click(screen.getByRole('button', { name: /Apply/ }))
 
