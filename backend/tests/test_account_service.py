@@ -995,6 +995,45 @@ async def test_get_account_summary_bill_payment_of_prior_debt_leaves_cycle_total
 
 
 @pytest.mark.asyncio
+async def test_get_account_summary_bill_linked_pre_window_payment_is_not_prior_debt(
+    session: AsyncSession, test_user, test_workspace
+):
+    """With a synced bill selected, a paired payment linked to that bill
+    but dated before the window already counts as paid on the bill, so it
+    must not also cancel the older debt: 100 prior debt and a 100 linked
+    payment leave nothing to net against this cycle (issue #668)."""
+    from datetime import datetime, timezone
+    from app.models.credit_card_bill import CreditCardBill
+
+    account = await _make_account(session, test_user.id, "CC Linked Pay", acc_type="credit_card")
+    today = date.today()
+    last_month = today.replace(day=1) - timedelta(days=1)
+    bill = CreditCardBill(
+        user_id=test_user.id, account_id=account.id, external_id="bill-668",
+        due_date=today + timedelta(days=10), total_amount=Decimal("1000"),
+        currency="BRL", created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    session.add(bill)
+    await session.commit()
+
+    await _add_txn(session, test_user.id, account.id, 100, "debit", last_month)
+    payment = await _add_txn(session, test_user.id, account.id, 100, "credit", last_month,
+                             transfer_pair_id=uuid.uuid4())
+    charge = await _add_txn(session, test_user.id, account.id, 1000, "debit", today)
+    payment.bill_id = bill.id
+    charge.bill_id = bill.id
+    await session.commit()
+
+    summary = await get_account_summary(
+        session, account.id, test_workspace.id, bill_id=bill.id,
+    )
+    assert summary is not None
+    assert summary["monthly_expenses"] == pytest.approx(1000.0)
+    assert summary["projected_expenses"] == pytest.approx(1000.0)
+
+
+@pytest.mark.asyncio
 async def test_get_account_summary_bill_nets_paired_payment_with_transfer_category(
     session: AsyncSession, test_user, test_workspace
 ):

@@ -1029,6 +1029,11 @@ async def get_account_summary(
             ), 0)).where(
                 Transaction.account_id == account_id,
                 bucket_date < date_from,
+                # Rows linked to the selected bill belong to it whatever
+                # their date (see `_scope`), so they are not older debt.
+                *([] if bill_id is None else [or_(
+                    Transaction.bill_id.is_(None), Transaction.bill_id != bill_id,
+                )]),
                 Transaction.is_ignored == False,
                 or_(
                     Transaction.category_id.is_(None),
