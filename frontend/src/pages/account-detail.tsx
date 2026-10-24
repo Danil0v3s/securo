@@ -728,7 +728,7 @@ export default function AccountDetailPage() {
             color: p.category_color ?? '',
             is_system: false,
             is_hidden: false,
-            treat_as_transfer: false,
+            treat_as_transfer: p.category_treat_as_transfer,
             is_ignored: false,
           }
         : null,
