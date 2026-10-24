@@ -2523,6 +2523,28 @@
     "finish": "Começar"
   },
   "agents": {
+    "templates": {
+      "title": "Começar com um modelo",
+      "subtitle": "Agentes prontos para tarefas comuns. Um clique cria um agente totalmente funcional, que dá para renomear e editar.",
+      "create": "Criar",
+      "presetHint": "Começando a partir do modelo {{template}}. Tudo é editável.",
+      "savingsAdvisor": {
+        "name": "Assessor de economia",
+        "description": "Compara seu gasto mês a mês e sugere onde guardar mais dinheiro."
+      },
+      "monthlyReview": {
+        "name": "Revisão mensal",
+        "description": "Resume seu mês: renda, gastos, patrimônio e o que observar."
+      },
+      "budgetWatcher": {
+        "name": "Fiscal de orçamentos",
+        "description": "Acompanha seus orçamentos e avisa quais estão perto do limite ou estourados."
+      },
+      "recurringAuditor": {
+        "name": "Auditor de recorrentes",
+        "description": "Lista suas assinaturas e marca cobranças esquecidas, duplicadas ou aumentadas."
+      }
+    },
     "title": "Agentes",
     "subtitle": "Construa assistentes conversacionais sobre seus dados do Securo. Cada agente pode ter sua própria base de conhecimento, ferramentas e provedor.",
     "newAgent": "Novo agente",

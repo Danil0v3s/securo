@@ -2671,6 +2671,28 @@
     "finish": "Začít"
   },
   "agents": {
+    "templates": {
+      "title": "Začít šablonou",
+      "subtitle": "Hotoví agenti pro běžné úkoly. Jedním kliknutím vytvoříte plně funkčního agenta, který se dá přejmenovat a upravovat.",
+      "create": "Vytvořit",
+      "presetHint": "Vytváříte ze šablony {{template}}. Vše lze upravit.",
+      "savingsAdvisor": {
+        "name": "Doporučitel úspor",
+        "description": "Porovnává vaše výdaje měsíc od měsíce a navrhuje, kde ušetřit více."
+      },
+      "monthlyReview": {
+        "name": "Měsíční přehled",
+        "description": "Shrnuje váš měsíc: příjem, výdaje, čistá hodnota a na co dát pozor."
+      },
+      "budgetWatcher": {
+        "name": "Hlídka rozpočtu",
+        "description": "Drží palce vašim rozpočtům a říká, které jsou blízko limitu nebo ho překročily."
+      },
+      "recurringAuditor": {
+        "name": "Audit opakujících se plateb",
+        "description": "Vypisuje vaše odběry a upozorňuje na zapomenuté, duplicitní nebo zdražené platby."
+      }
+    },
     "title": "Agenti",
     "subtitle": "Vytvářet konverzační asistenty nad vlastními daty v Securo. Každý agent může mít vlastní znalostní bázi, nástroje a poskytovatele.",
     "newAgent": "Nový agent",

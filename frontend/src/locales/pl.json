@@ -2623,6 +2623,28 @@
     "finish": "Zaczynamy"
   },
   "agents": {
+    "templates": {
+      "title": "Zacznij od szablonu",
+      "subtitle": "Gotowi agenci do typowych zadań. Jedno kliknięcie tworzy w pełni działającego agenta, którego można przemianować i edytować.",
+      "create": "Utwórz",
+      "presetHint": "Start z szablonu {{template}}. Wszystko jest edytowalne.",
+      "savingsAdvisor": {
+        "name": "Doradca oszczędności",
+        "description": "Porównuje Twoje wydatki miesiąc do miesiąca i podpowiada, gdzie można zaoszczędzić więcej."
+      },
+      "monthlyReview": {
+        "name": "Miesięczne podsumowanie",
+        "description": "Podsumowuje Twój miesiąc: dochody, wydatki, majątek netto i na co uważać."
+      },
+      "budgetWatcher": {
+        "name": "Strażnik budżetu",
+        "description": "Czujnie obserwuje Twoje budżety i mówi, które są blisko limitu lub go przekraczają."
+      },
+      "recurringAuditor": {
+        "name": "Audytor opłat cyklicznych",
+        "description": "Wypisuje Twoje subskrypcje i zaznacza zapomniane, zduplikowane lub podwyższone opłaty."
+      }
+    },
     "title": "Agenci",
     "subtitle": "Twórz konwersacyjnych asystentów na bazie swoich danych w Securo. Każdy agent może mieć własną bazę wiedzy, narzędzia i dostawcę.",
     "newAgent": "Nowy agent",

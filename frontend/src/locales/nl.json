@@ -2521,6 +2521,28 @@
     "finish": "Aan de slag"
   },
   "agents": {
+    "templates": {
+      "title": "Beginnen met een sjabloon",
+      "subtitle": "Kant-en-klare agents voor gangbare taken. Eén klik maakt een volledig werkende agent aan die je kunt hernoemen en bewerken.",
+      "create": "Aanmaken",
+      "presetHint": "Start vanuit het sjabloon {{template}}. Alles is bewerkbaar.",
+      "savingsAdvisor": {
+        "name": "Bespaaradviseur",
+        "description": "Vergelijkt je uitgaven maand op maand en suggereert waar je meer kunt besparen."
+      },
+      "monthlyReview": {
+        "name": "Maandelijkse review",
+        "description": "Vat je maand samen: inkomen, uitgaven, nettoward en waar je op moet letten."
+      },
+      "budgetWatcher": {
+        "name": "Budgetwacht",
+        "description": "Houdt je budgetten in de gaten en vertelt welke dicht bij de limiet zijn of hem overschrijden."
+      },
+      "recurringAuditor": {
+        "name": "Auditor van vaste lasten",
+        "description": "Lijst je abonnementen op en markeert vergeten, gedupliceerde of verhoogde kosten."
+      }
+    },
     "title": "Agents",
     "subtitle": "Bouw gespreksassistenten bovenop uw Securo-gegevens. Elke agent kan zijn eigen kennisbank, tools en provider hebben.",
     "newAgent": "Nieuwe agent",

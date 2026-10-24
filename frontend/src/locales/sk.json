@@ -2655,6 +2655,28 @@
     "finish": "Začať"
   },
   "agents": {
+    "templates": {
+      "title": "Začať šablónou",
+      "subtitle": "Hotoví agenti pre bežné úlohy. Jedným kliknutím vytvoríte plne funkčného agenta, ktorý sa dá premenovať a upravovať.",
+      "create": "Vytvoriť",
+      "presetHint": "Vytvárate z šablóny {{template}}. Všetko je editovateľné.",
+      "savingsAdvisor": {
+        "name": "Doporučiteľ úspor",
+        "description": "Porovnáva vaše výdavky mesiac od mesiaca a navrhuje, kde ušetriť viac."
+      },
+      "monthlyReview": {
+        "name": "Mesačný prehľad",
+        "description": "Zhrňuje váš mesiac: príjmy, výdavky, čistá hodnota a na čo si dať pozor."
+      },
+      "budgetWatcher": {
+        "name": "Hliadka rozpočtu",
+        "description": "Drží palce vašim rozpočtom a povie, ktoré sú blízko limitu alebo ho prekročili."
+      },
+      "recurringAuditor": {
+        "name": "Audit opakujúcich sa platieb",
+        "description": "Vypíše vaše odbory a upozorní na zabudnuté, duplicitné alebo zdražené platby."
+      }
+    },
     "title": "Agenti",
     "subtitle": "Vytváraj konverzačných asistentov nad svojimi dátami v Securo. Každý agent môže mať vlastnú znalostnú bázu, nástroje a poskytovateľa.",
     "newAgent": "Nový agent",

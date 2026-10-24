@@ -2523,6 +2523,28 @@
     "finish": "Inizia"
   },
   "agents": {
+    "templates": {
+      "title": "Parti da un modello",
+      "subtitle": "Agenti pronti per le attività comuni. Un clic crea un agente pienamente funzionante, che puoi rinominare e modificare.",
+      "create": "Crea",
+      "presetHint": "Si parte dal modello {{template}}. Tutto è modificabile.",
+      "savingsAdvisor": {
+        "name": "Consulente per i risparmi",
+        "description": "Confronta le tue spese mese per mese e suggerisce dove puoi tenere di più."
+      },
+      "monthlyReview": {
+        "name": "Revisione mensile",
+        "description": "Riassume il tuo mese: entrate, uscite, patrimonio netto e cosa tenere d'occhio."
+      },
+      "budgetWatcher": {
+        "name": "Vigile sui budget",
+        "description": "Tiene d'occhio i tuoi budget e ti dice quali sono vicini al limite o oltre."
+      },
+      "recurringAuditor": {
+        "name": "Auditor delle ricorrenze",
+        "description": "Elenca i tuoi abbonamenti e segnala le spese dimenticate, duplicate o aumentate."
+      }
+    },
     "title": "Agenti",
     "subtitle": "Crea assistenti conversazionali basati sui tuoi dati Securo. Ogni agente può avere la propria knowledge base, i propri strumenti e il proprio provider.",
     "newAgent": "Nuovo agente",

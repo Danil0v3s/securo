@@ -2520,6 +2520,28 @@
     "finish": "Loslegen"
   },
   "agents": {
+    "templates": {
+      "title": "Mit einer Vorlage starten",
+      "subtitle": "Fertige Agenten für gängige Aufgaben. Ein Klick erstellt einen voll funktionsfähigen Agenten, den Sie umbenennen und bearbeiten können.",
+      "create": "Erstellen",
+      "presetHint": "Startet von der Vorlage {{template}}. Alles ist bearbeitbar.",
+      "savingsAdvisor": {
+        "name": "Sparberater",
+        "description": "Vergleicht Ihre Ausgaben Monat für Monat und schlägt vor, wo Sie mehr sparen können."
+      },
+      "monthlyReview": {
+        "name": "Monatsrückblick",
+        "description": "Fasst Ihren Monat zusammen: Einkommen, Ausgaben, Nettovermögen und worauf Sie achten sollten."
+      },
+      "budgetWatcher": {
+        "name": "Budgetwächter",
+        "description": "Behält Ihre Budgets im Auge und sagt, welche fast erreicht oder überschritten sind."
+      },
+      "recurringAuditor": {
+        "name": "Abo-Prüfer",
+        "description": "Listet Ihre Abonnements auf und markiert vergessene, doppelte oder erhöhte Zahlungen."
+      }
+    },
     "title": "Agenten",
     "subtitle": "Erstelle Konversationsassistenten basierend auf deinen Securo-Daten. Jeder Agent kann seine eigene Wissensdatenbank, Werkzeuge und Anbieter haben.",
     "newAgent": "Neuer Agent",

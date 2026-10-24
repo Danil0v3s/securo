@@ -2519,6 +2519,28 @@
     "finish": "Kezdjük"
   },
   "agents": {
+    "templates": {
+      "title": "Kezdés sablontól",
+      "subtitle": "Kész ügynökök gyakori feladatokhoz. Egy kattintással teljesen működőképes ügynököt hoz létre, amit átnevezhet és szerkeszthet.",
+      "create": "Létrehozás",
+      "presetHint": "Indulás a(z) {{template}} sablonból. Minden szerkeszthető.",
+      "savingsAdvisor": {
+        "name": "Takarékos tanácsadó",
+        "description": "Hónapról hónapra hasonlítja a kiadásait, és javasol, hol takaríthat többet."
+      },
+      "monthlyReview": {
+        "name": "Havi áttekintés",
+        "description": "Összefoglalja a hónapját: jövedelem, kiadás, nettó vagyontétel és mire kell figyelnie."
+      },
+      "budgetWatcher": {
+        "name": "Költségkeret-őr",
+        "description": "Figyeli a költségkereteit, és megmondja, melyik közelít a limithez vagy elérte azt."
+      },
+      "recurringAuditor": {
+        "name": "Ismétlődő díjak ellenőre",
+        "description": "Összeállítja az előfizetéseit, és jelzi az elfelejtett, duplikált vagy emelt díjakat."
+      }
+    },
     "title": "Ügynökök",
     "subtitle": "Építs beszélgetős asszisztenseket a Securo-adataidra. Minden ügynöknek saját tudásbázisa, eszközei és szolgáltatója lehet.",
     "newAgent": "Új ügynök",

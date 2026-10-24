@@ -2519,6 +2519,28 @@
     "finish": "Get Started"
   },
   "agents": {
+    "templates": {
+      "title": "Start from a template",
+      "subtitle": "Ready-made agents tuned for common jobs. One click creates a fully working agent you can rename and edit.",
+      "create": "Create",
+      "presetHint": "Starting from the {{template}} template. Everything is editable.",
+      "savingsAdvisor": {
+        "name": "Savings advisor",
+        "description": "Compares your spending month over month and suggests where to keep more."
+      },
+      "monthlyReview": {
+        "name": "Monthly review",
+        "description": "Summarizes your month: income, expenses, net worth, and what to watch."
+      },
+      "budgetWatcher": {
+        "name": "Budget watcher",
+        "description": "Keeps an eye on your budgets and tells you which ones are close or over."
+      },
+      "recurringAuditor": {
+        "name": "Recurring auditor",
+        "description": "Lists your subscriptions and flags forgotten, duplicated, or raised charges."
+      }
+    },
     "title": "Agents",
     "subtitle": "Build conversational assistants on top of your Securo data. Each agent can have its own knowledge base, tools, and provider.",
     "newAgent": "New agent",
