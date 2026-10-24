@@ -3275,6 +3275,121 @@ async def test_sync_keeps_deducting_when_asset_sync_disabled_later(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("user_action", ["sold", "archived"])
+async def test_sync_does_not_deduct_for_holding_the_user_sold_or_archived(
+    session: AsyncSession, test_user, test_workspace, user_action
+):
+    """Issue #843: the assets sync keeps a sell date or archive the user set,
+    so the asset no longer counts even while the provider still lists the
+    holding; the account must then keep the full balance."""
+    first, _ = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None,
+    )
+    assert first.balance == Decimal("600")
+    conn = await session.get(BankConnection, first.connection_id)
+    asset = (
+        await session.execute(
+            select(Asset).where(Asset.external_id == "auto-inv-holding-1")
+        )
+    ).scalar_one()
+    if user_action == "sold":
+        asset.sell_date = date.today()
+    else:
+        asset.is_archived = True
+    await session.commit()
+
+    account, provider = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None, conn=conn,
+    )
+
+    provider.get_holdings.assert_awaited_once()
+    await session.refresh(account)
+    assert account.balance == Decimal("1000")
+    await session.refresh(asset)
+    if user_action == "sold":
+        assert asset.sell_date is not None
+    else:
+        assert asset.is_archived is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("auto_invested", "holding_value", "expected"),
+    [
+        ("400", "25", "1000"),
+        ("400", "400", "600"),
+        ("400", "404", "600"),
+        ("400", "396", "600"),
+        ("400", "404.01", "1000"),
+        ("50", "50.90", "950"),
+        ("50", "51.01", "1000"),
+    ],
+    ids=[
+        "unrelated", "equal", "within-1pct-above", "within-1pct-below",
+        "beyond-1pct", "within-1-unit", "beyond-1-unit",
+    ],
+)
+async def test_sync_unattributed_holding_must_match_auto_invested_value(
+    session: AsyncSession, test_user, test_workspace,
+    auto_invested, holding_value, expected,
+):
+    """Issue #843: a holding with no owning account only stands for the
+    auto-invested money when its value matches it (1% or 1.00, whichever is
+    larger); an unrelated investment of the same connection deducts
+    nothing."""
+    conn = await _make_connection(session, test_user.id, "Match Bank")
+    accounts = [_auto_invest_account("acc-checking", "1000", auto_invested)]
+
+    balances, _ = await _sync_accounts(
+        session, test_user, test_workspace, conn, accounts,
+        [_holding("fund-x", holding_value)],
+    )
+
+    assert balances["acc-checking"] == Decimal(expected)
+
+
+@pytest.mark.asyncio
+async def test_sync_unattributed_holding_in_another_currency_does_not_deduct(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: the same figure in another currency is not evidence."""
+    conn = await _make_connection(session, test_user.id, "Currency Bank")
+    holding = HoldingData(
+        external_id="fund-usd", name="Fund", currency="USD",
+        current_value=Decimal("400"),
+    )
+
+    balances, _ = await _sync_accounts(
+        session, test_user, test_workspace, conn,
+        [_auto_invest_account("acc-checking", "1000", "400")], [holding],
+    )
+
+    assert balances["acc-checking"] == Decimal("1000")
+
+
+@pytest.mark.asyncio
+async def test_sync_fetch_fails_with_unrelated_stored_holding_keeps_gross(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: the database fallback applies the same value match, so a
+    stored unrelated investment does not justify the deduction either."""
+    conn = await _make_connection(session, test_user.id, "Fallback Bank")
+    accounts = [_auto_invest_account("acc-checking", "1000", "400")]
+    await _sync_accounts(
+        session, test_user, test_workspace, conn, accounts,
+        [_holding("fund-x", "25")],
+    )
+
+    balances, provider = await _sync_accounts(
+        session, test_user, test_workspace, conn, accounts,
+        RuntimeError("investments unavailable"),
+    )
+
+    provider.get_holdings.assert_awaited_once()
+    assert balances["acc-checking"] == Decimal("1000")
+
+
+@pytest.mark.asyncio
 async def test_sync_connection_does_not_revive_ignored_transaction(
     session: AsyncSession, test_user, test_workspace,
 ):

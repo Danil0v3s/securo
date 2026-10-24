@@ -2,6 +2,7 @@ import hashlib
 import logging
 import re
 import uuid
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Literal, Optional
@@ -281,30 +282,95 @@ async def _fetch_holdings(
         return None
 
 
-async def _live_holding_accounts(
+@dataclass(frozen=True)
+class _CountedHolding:
+    """A holding that stays counted in net worth after this sync."""
+
+    account_external_id: Optional[str]  # None: not attributable to an account
+    value: Decimal
+    currency: str
+
+
+def _provider_sell_date_reverts(asset: Asset) -> bool:
+    """Whether a live payload clears this asset's sell date.
+
+    Only a sell date the sync itself set for a provider withdrawal
+    (TOTAL_WITHDRAWAL) is reversible; a date the user entered stays.
+    """
+    if asset.sell_date is None:
+        return False
+    metadata = asset.external_metadata or {}
+    return (
+        str(metadata.get("status") or "").upper() == "TOTAL_WITHDRAWAL"
+        and metadata.get(_PROVIDER_SELL_DATE_METADATA_KEY)
+        == asset.sell_date.isoformat()
+    )
+
+
+def _stays_counted(existing: Optional[Asset], connection_id: uuid.UUID) -> bool:
+    """Whether a live holding leaves its asset counted after ``_sync_holdings``.
+
+    Mirrors what the assets sync keeps: a user-set sell date survives, and
+    an archived asset is only unarchived when the holding moved to another
+    connection.
+    """
+    if existing is None:
+        return True
+    if existing.sell_date is not None and not _provider_sell_date_reverts(existing):
+        return False
+    return not (existing.is_archived and existing.connection_id == connection_id)
+
+
+async def _counted_holdings(
     session: AsyncSession,
     connection: BankConnection,
     holdings: Optional[list[HoldingData]],
     accounts_data: list[AccountData],
-) -> set[Optional[str]]:
-    """Owning accounts of the holdings this sync leaves counted in net worth.
+) -> list[_CountedHolding]:
+    """Holdings this sync leaves counted in net worth, with their owners.
 
-    Each entry is the external id of the account a live holding belongs to,
-    or None for a live holding that cannot be attributed to an account.
-
-    A fetched payload decides on its own (withdrawn positions are not
-    counted). Without one (asset sync disabled, or the fetch failed) the
-    assets sync does not run and whatever it stored last stays in place, so
-    the answer comes from the database: every live (not archived, not sold)
-    asset this connection's holdings sync owns is still counted in net
-    worth. Its owner is read back from the per-account wallet the sync put
-    it in; any other wallet means unattributed.
+    A fetched payload decides on its own: withdrawn positions are not
+    counted, and neither are positions whose stored asset the user sold or
+    archived, since the assets sync keeps that state. Without a payload
+    (asset sync disabled, or the fetch failed) the assets sync does not run
+    and whatever it stored last stays in place, so the answer comes from
+    the database: every live (not archived, not sold) asset this
+    connection's holdings sync owns, at its latest stored value. Its owner
+    is read back from the per-account wallet the sync put it in; any other
+    wallet means unattributed.
     """
     if holdings is not None:
-        return {h.account_external_id for h in holdings if not h.is_withdrawn}
-    wallet_keys = (
-        await session.scalars(
-            select(AssetGroup.external_id)
+        live = [h for h in holdings if not h.is_withdrawn]
+        if not live:
+            return []
+        existing_by_external = {
+            asset.external_id: asset
+            for asset in (
+                await session.scalars(
+                    select(Asset).where(
+                        Asset.workspace_id == connection.workspace_id,
+                        Asset.source == connection.provider,
+                        Asset.external_id.in_([h.external_id for h in live]),
+                    )
+                )
+            ).all()
+        }
+        return [
+            _CountedHolding(h.account_external_id, h.current_value, h.currency)
+            for h in live
+            if _stays_counted(existing_by_external.get(h.external_id), connection.id)
+        ]
+
+    latest_value = (
+        select(AssetValue.amount)
+        .where(AssetValue.asset_id == Asset.id)
+        .order_by(AssetValue.date.desc())
+        .limit(1)
+        .scalar_subquery()
+    )
+    rows = (
+        await session.execute(
+            select(AssetGroup.external_id, latest_value, Asset.currency)
             .select_from(Asset)
             .outerjoin(AssetGroup, Asset.group_id == AssetGroup.id)
             .where(
@@ -322,36 +388,70 @@ async def _live_holding_accounts(
         for acc in accounts_data
         if acc.external_id
     }
-    return {account_by_wallet.get(key) if key else None for key in wallet_keys}
+    return [
+        _CountedHolding(
+            account_by_wallet.get(key) if key else None,
+            Decimal(value) if value is not None else Decimal(0),
+            currency,
+        )
+        for key, value, currency in rows
+    ]
+
+
+# How far an unattributed holding's value may sit from an account's
+# auto-invested balance and still count as the same money: the larger of
+# 1% and 1.00 in the account currency. The two figures come from different
+# provider endpoints and can drift by a day's yield.
+_AUTO_INVEST_MATCH_RELATIVE = Decimal("0.01")
+_AUTO_INVEST_MATCH_ABSOLUTE = Decimal("1")
+
+
+def _mirrors_auto_invested(holding: _CountedHolding, acc: AccountData) -> bool:
+    """Whether an unattributed holding looks like this account's auto-invested money."""
+    if holding.currency != acc.currency:
+        return False
+    tolerance = max(
+        acc.auto_invested_balance * _AUTO_INVEST_MATCH_RELATIVE,
+        _AUTO_INVEST_MATCH_ABSOLUTE,
+    )
+    return abs(holding.value - acc.auto_invested_balance) <= tolerance
 
 
 def _auto_invested_deductions(
-    accounts_data: list[AccountData], holding_accounts: set[Optional[str]]
+    accounts_data: list[AccountData], counted: list[_CountedHolding]
 ) -> set[str]:
     """External ids of the accounts whose auto-invested portion is deducted.
 
     The deduction is per account: an account loses its auto-invested portion
-    only when a live holding is counted for that same account, never because
-    some other account of the connection has one.
+    only when a counted holding is attributed to that same account, never
+    because some other account of the connection has one.
 
     Holdings without an owning account (Pluggy's investments payload carries
     the item but no account id, so this is the normal case there) cannot say
-    which account they came from. Deducting from every account with an
-    auto-invested balance could take the money out of the wrong one and
-    understate net worth, so an unattributed holding only allows the
-    deduction when exactly one account of the connection reports an
-    auto-invested balance: then it is the only account the holding can
-    mirror (the checking account plus its auto-applied fund of issue #843).
-    With two or more such accounts and no attribution, all of them keep the
-    full reported balance, which can count the money twice but never drops
-    it.
+    which account they came from, or whether they are the auto-invested
+    money at all (the same item can hold unrelated investments). Deducting
+    on a guess would understate net worth, so an unattributed holding only
+    allows the deduction when both hold:
+
+    - exactly one account of the connection reports an auto-invested
+      balance, so it is the only account the holding can mirror;
+    - the holding's value matches that balance, in the same currency,
+      within the tolerance above (in the case of issue #843 the two figures
+      were identical).
+
+    Otherwise the account keeps the full reported balance, which can count
+    the money twice but never drops it.
     """
     candidates = [acc for acc in accounts_data if acc.auto_invested_balance > 0]
-    deducted = {
-        acc.external_id for acc in candidates if acc.external_id in holding_accounts
-    }
-    if None in holding_accounts and len(candidates) == 1:
-        deducted.add(candidates[0].external_id)
+    owners = {h.account_external_id for h in counted}
+    deducted = {acc.external_id for acc in candidates if acc.external_id in owners}
+    if len(candidates) == 1:
+        only = candidates[0]
+        if any(
+            h.account_external_id is None and _mirrors_auto_invested(h, only)
+            for h in counted
+        ):
+            deducted.add(only.external_id)
     return deducted
 
 
@@ -368,10 +468,8 @@ async def _resolve_auto_invested_deductions(
     """
     if not any(acc.auto_invested_balance > 0 for acc in accounts_data):
         return set()
-    holding_accounts = await _live_holding_accounts(
-        session, connection, holdings, accounts_data
-    )
-    return _auto_invested_deductions(accounts_data, holding_accounts)
+    counted = await _counted_holdings(session, connection, holdings, accounts_data)
+    return _auto_invested_deductions(accounts_data, counted)
 
 
 async def _sync_holdings(
@@ -707,15 +805,7 @@ async def _sync_holdings(
         # is needed to distinguish TOTAL_WITHDRAWAL -> ACTIVE from a manually
         # entered sell date. Manual dates remain authoritative when there was
         # no provider withdrawal transition.
-        previous_metadata = existing.external_metadata or {} if existing is not None else {}
-        previous_provider_status = str(previous_metadata.get("status") or "").upper()
-        provider_sell_date = previous_metadata.get(_PROVIDER_SELL_DATE_METADATA_KEY)
-        if (
-            existing is not None
-            and existing.sell_date is not None
-            and previous_provider_status == "TOTAL_WITHDRAWAL"
-            and provider_sell_date == existing.sell_date.isoformat()
-        ):
+        if existing is not None and _provider_sell_date_reverts(existing):
             existing.sell_date = None
 
         asset = await _upsert_asset_from_holding(
