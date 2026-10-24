@@ -743,6 +743,9 @@ export interface DashboardSummary {
   assets_value: Record<string, number>
   assets_value_primary: number
   primary_currency: string
+  // At least one currency bucket had no real FX rate, so the *_primary
+  // totals sum it at 1:1 and are an estimate, not a conversion (issue #1165).
+  fx_fallback?: boolean
   // Net pending balance from group splits in primary currency.
   // Negative = net liability, positive = net receivable. Already
   // accounts for partial settlements.

@@ -860,9 +860,18 @@ export default function DashboardPage() {
             {summaryLoading || accountsUnavailable ? (
               <Skeleton className="h-6 w-24" />
             ) : (
-              <p className={`text-lg sm:text-xl font-bold tabular-nums ${totalBalance < 0 ? 'text-rose-500' : 'text-foreground'}`}>
-                {mask(formatCurrency(totalBalance, primaryCurrency, locale))}
-              </p>
+              <>
+                <p className={`text-lg sm:text-xl font-bold tabular-nums ${totalBalance < 0 ? 'text-rose-500' : 'text-foreground'}`}>
+                  {mask(formatCurrency(totalBalance, primaryCurrency, locale))}
+                </p>
+                {/* Visible text, not a hover title, so touch users can read it. */}
+                {summary?.fx_fallback === true && (
+                  <p className="mt-1 flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+                    <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                    <span>{t('transactions.fxFallbackBanner')}</span>
+                  </p>
+                )}
+              </>
             )}
           </div>
 
