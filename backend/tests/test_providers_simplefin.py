@@ -400,6 +400,7 @@ async def test_get_transactions_expired_account_soft_skips_and_flags_reauth(capl
 
     assert txns == []
     assert [w["code"] for w in provider.action_required_warnings] == ["con.auth"]
+    assert provider.incomplete_account_ids == {"acc-expired"}
     assert any("reauthorization" in rec.getMessage() for rec in caplog.records)
 
 
@@ -419,7 +420,42 @@ async def test_get_transactions_http_refusal_soft_skips_and_flags_reauth(caplog)
 
     assert txns == []
     assert [w["code"] for w in provider.action_required_warnings] == ["credentials_invalid"]
+    assert provider.incomplete_account_ids == {"acc-expired"}
     assert any("refused" in rec.getMessage() for rec in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_get_transactions_refusal_after_first_chunk_marks_fetch_incomplete():
+    """A refusal on a later window chunk keeps the earlier chunk's rows but
+    marks the account's fetch as incomplete, so the sync layer does not
+    treat the partial result as everything the bridge still has."""
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.params.get("start-date"))
+        if len(calls) == 1:
+            return httpx.Response(200, json={
+                "errlist": [],
+                "accounts": [{
+                    "id": "acc-1", "currency": "USD", "balance": "10.00",
+                    "transactions": [{
+                        "id": "tx-early", "posted": 1767225600,
+                        "amount": "-5.00", "description": "EARLY ROW",
+                    }],
+                }],
+            })
+        return httpx.Response(403, text="authentication required")
+
+    creds = {"access_url": "https://u:p@bridge.example/simplefin"}
+    provider = SimpleFinProvider()
+    with _patched_client(handler):
+        txns = await provider.get_transactions(
+            creds, "acc-1", since=date.today() - timedelta(days=150)
+        )
+
+    assert len(calls) == 2
+    assert [t.external_id for t in txns] == ["tx-early"]
+    assert provider.incomplete_account_ids == {"acc-1"}
 
 
 # ----- transactions -----------------------------------------------------------

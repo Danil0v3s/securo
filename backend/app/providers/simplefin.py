@@ -188,6 +188,10 @@ class SimpleFinProvider(BankProvider):
 
     def __init__(self) -> None:
         self.action_required_warnings: list[dict] = []
+        # External ids of accounts whose transaction fetch stopped early on
+        # an authorization failure. Their result is partial (earlier chunks
+        # only), so the sync layer must not treat it as the full live set.
+        self.incomplete_account_ids: set[str] = set()
 
     @property
     def name(self) -> str:
@@ -520,6 +524,7 @@ class SimpleFinProvider(BankProvider):
                     account_external_id,
                     exc.code,
                 )
+                self.incomplete_account_ids.add(account_external_id)
                 return transactions
             matching_accounts = [
                 raw_acc for raw_acc in payload.get("accounts") or []
@@ -555,6 +560,7 @@ class SimpleFinProvider(BankProvider):
                         account_external_id,
                         [e.get("code") for e in reauth],
                     )
+                    self.incomplete_account_ids.add(account_external_id)
                     return transactions
             warnings = _surface_errors(
                 [
