@@ -141,6 +141,7 @@ async def _get_recurring_projections(
             if (rec.id, occ_date) in materialized_occurrences:
                 continue
             projections.append({
+                "account_id": rec.account_id,
                 "category_id": rec.category_id,
                 "amount": float(rec.amount),
                 "type": rec.type,
@@ -207,6 +208,37 @@ def _counts_as_user_pnl_row(tx: Transaction) -> bool:
         or tx.source == "settlement"
         or (category and (category.treat_as_transfer or category.is_ignored))
     )
+
+
+async def _sum_to_primary(
+    session: AsyncSession,
+    buckets: dict[str, float],
+    primary_currency: str,
+    target_date: Optional[date],
+) -> tuple[float, bool]:
+    """Sum per-currency buckets in the primary currency, real rates only.
+
+    A bucket without a real rate is kept at its native amount (1:1) and the
+    returned flag reports the estimate, so the UI can surface it instead of
+    a foreign balance passing as converted (issue #1165, same rule as the
+    account list in app/api/accounts.py).
+    """
+    total = 0.0
+    fx_fallback = False
+    for currency, amount in buckets.items():
+        if currency == primary_currency:
+            total += float(amount)
+            continue
+        if not amount:
+            # Zero is zero in any currency: no rate needed, nothing estimated.
+            continue
+        rate = await _resolve_rate(session, currency, primary_currency, target_date)
+        if rate is None:
+            fx_fallback = True
+            total += float(amount)
+            continue
+        total += float((Decimal(str(amount)) * rate).quantize(Decimal("0.01")))
+    return total, fx_fallback
 
 
 async def get_summary(
@@ -464,16 +496,16 @@ async def get_summary(
         total_balance[currency] = total_balance.get(currency, 0.0) + amount
         projected_balance[currency] = projected_balance.get(currency, 0.0) + amount
 
-    # Convert totals to primary currency
-    total_balance_primary = 0.0
-    for currency, amount in total_balance.items():
-        converted, _ = await convert(session, Decimal(str(amount)), currency, primary_currency, cutoff)
-        total_balance_primary += float(converted)
-
-    projected_balance_primary = 0.0
-    for currency, amount in projected_balance.items():
-        converted, _ = await convert(session, Decimal(str(amount)), currency, primary_currency, cutoff)
-        projected_balance_primary += float(converted)
+    # Convert totals to primary currency. A currency bucket without a real
+    # rate stays at its native amount and sets the flag, so the estimate is
+    # visible instead of foreign money passing as converted (issue #1165).
+    total_balance_primary, fx_fallback = await _sum_to_primary(
+        session, total_balance, primary_currency, cutoff
+    )
+    projected_balance_primary, projected_fx_fallback = await _sum_to_primary(
+        session, projected_balance, primary_currency, cutoff
+    )
+    fx_fallback = fx_fallback or projected_fx_fallback
 
     # Convert income/expenses to primary currency using amount_primary when available
     # Use real-only totals (without projections) to avoid double-counting;
@@ -636,6 +668,7 @@ async def get_summary(
         assets_value=assets_value,
         assets_value_primary=round(assets_value_primary, 2),
         primary_currency=primary_currency,
+        fx_fallback=fx_fallback,
         pending_shares_net=round(pending_shares_net, 2),
     )
 
@@ -1579,24 +1612,38 @@ async def get_balance_history(
     user = await session.get(User, user_id)
     primary_currency = user.primary_currency if user else get_settings().default_currency
 
+    # Loans are long-term debt: they count in net worth, not in the money this
+    # curve tracks, so it leaves them out (like the sidebar accounts total).
+    loan_ids = set((await session.execute(
+        select(Account.id).where(Account.workspace_id == workspace_id, Account.type == "loan")
+    )).scalars())
+    balance_account_ids = account_ids
+    if loan_ids:
+        if account_ids is None:
+            balance_account_ids = list((await session.execute(
+                select(Account.id).where(Account.workspace_id == workspace_id, Account.type != "loan")
+            )).scalars())
+        else:
+            balance_account_ids = [i for i in account_ids if i not in loan_ids]
+
     # Starting balances
     current_start = await _balance_at(
         session, workspace_id, month_start - timedelta(days=1),
-        primary_currency_hint=primary_currency, account_ids=account_ids,
+        primary_currency_hint=primary_currency, account_ids=balance_account_ids,
     )
     prev_start = await _balance_at(
         session, workspace_id, prev_month_start - timedelta(days=1),
-        primary_currency_hint=primary_currency, account_ids=account_ids,
+        primary_currency_hint=primary_currency, account_ids=balance_account_ids,
     )
 
     # Daily deltas from real transactions
     current_deltas = await _daily_deltas(
         session, workspace_id, month_start, month_end,
-        primary_currency_hint=primary_currency, account_ids=account_ids,
+        primary_currency_hint=primary_currency, account_ids=balance_account_ids,
     )
     prev_deltas = await _daily_deltas(
         session, workspace_id, prev_month_start, prev_month_end,
-        primary_currency_hint=primary_currency, account_ids=account_ids,
+        primary_currency_hint=primary_currency, account_ids=balance_account_ids,
     )
 
     # Recurring projections for future days of current month (converted to primary currency)
@@ -1609,7 +1656,7 @@ async def get_balance_history(
         # rows dated today or earlier.
         if month_start > today:
             carried_forecasts = await _get_forecast_transactions(
-                session, workspace_id, date.min, month_start, account_ids
+                session, workspace_id, date.min, month_start, balance_account_ids
             )
             for tx in carried_forecasts:
                 if tx.is_ignored or (tx.category and tx.category.is_ignored):
@@ -1626,7 +1673,7 @@ async def get_balance_history(
             workspace_id,
             proj_start,
             month_end,
-            account_ids,
+            balance_account_ids,
         )
         for tx in forecast_transactions:
             if tx.is_ignored or (tx.category and tx.category.is_ignored):
@@ -1646,6 +1693,8 @@ async def get_balance_history(
             session, workspace_id, proj_start, month_end, account_ids
         )
         for proj in projections:
+            if proj["account_id"] in loan_ids:
+                continue
             day = proj["date"].day
             proj_converted, _ = await convert(
                 session, Decimal(str(proj["amount"])), proj["currency"], primary_currency,
