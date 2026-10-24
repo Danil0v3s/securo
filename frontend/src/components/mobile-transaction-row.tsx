@@ -118,7 +118,12 @@ export function MobileTransactionRow({
             </span>
           )}
           {!!tx.transfer_pair_id && (
-            <ArrowLeftRight className="h-3 w-3 text-blue-600 shrink-0" />
+            <span
+              className="inline-flex shrink-0"
+              title={tx.transfer_counterpart?.account_name}
+            >
+              <ArrowLeftRight className="h-3 w-3 text-blue-600" />
+            </span>
           )}
           {virtual && (
             <CalendarClock className="h-3 w-3 text-primary shrink-0" />

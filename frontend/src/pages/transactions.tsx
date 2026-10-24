@@ -1177,6 +1177,16 @@ export default function TransactionsPage() {
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full">
                 <ArrowLeftRight className="h-3 w-3" />
                 {t('transactions.transfer')}
+                {tx.transfer_counterpart && (
+                  <Link
+                    to={`/accounts/${tx.transfer_counterpart.account_id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    title={tx.transfer_counterpart.account_name}
+                    className="normal-case tracking-normal font-medium max-w-[180px] truncate hover:underline"
+                  >
+                    {tx.transfer_counterpart.account_name}
+                  </Link>
+                )}
                 <span title={t('transactions.transferTooltip')}><HelpCircle className="h-3 w-3 text-blue-400" /></span>
               </span>
             )}

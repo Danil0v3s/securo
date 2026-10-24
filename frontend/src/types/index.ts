@@ -290,6 +290,12 @@ export interface Transaction {
   payee_name: string | null
   notes: string | null
   transfer_pair_id: string | null
+  /**
+   * The other leg of the transfer this row belongs to, when it is one.
+   * The paginated list fills it so the badge can name the account the
+   * transfer is linked to (issue #810); other endpoints leave it null.
+   */
+  transfer_counterpart?: { account_id: string; account_name: string } | null
   amount_primary: number | null
   fx_rate_used: number | null
   fx_fallback: boolean
