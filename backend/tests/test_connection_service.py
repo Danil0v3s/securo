@@ -2877,7 +2877,7 @@ async def _sync_auto_invested_account(
          patch("app.services.connection_service.detect_transfer_pairs", new_callable=AsyncMock), \
          patch("app.services.connection_service.stamp_primary_amount", new_callable=AsyncMock), \
          patch("app.services.connection_service.apply_rules_to_transaction", new_callable=AsyncMock):
-        result_conn, _ = await sync_connection(session, conn.id, test_workspace.id, test_user.id)
+        result_conn, _, _ = await sync_connection(session, conn.id, test_workspace.id, test_user.id)
 
     assert result_conn.status == "active"
     account = (
@@ -3101,6 +3101,177 @@ async def test_oauth_callback_deducts_auto_invested_only_when_holding_counted(
     )
 
     assert account.balance == expected
+
+
+def _auto_invest_account(external_id, balance, auto_invested, type="checking"):
+    return AccountData(
+        external_id=external_id, name=f"Account {external_id}",
+        type=type, balance=Decimal(balance), currency="BRL",
+        auto_invested_balance=Decimal(auto_invested),
+    )
+
+
+async def _sync_accounts(session, test_user, test_workspace, conn, accounts, holdings):
+    """Sync ``accounts`` on ``conn`` with ``holdings`` as the investments
+    payload (an exception makes the fetch fail) and return the stored
+    balances by external id, plus the provider mock."""
+    from app.models.account import Account
+
+    mock_provider = AsyncMock()
+    mock_provider.refresh_credentials = AsyncMock(return_value={"token": "t"})
+    mock_provider.get_institution_logo = AsyncMock(return_value=None)
+    mock_provider.get_accounts = AsyncMock(return_value=accounts)
+    mock_provider.get_transactions = AsyncMock(return_value=[])
+    mock_provider.get_holdings = _holdings_mock(holdings)
+
+    with patch("app.services.connection_service.get_provider", return_value=mock_provider), \
+         patch("app.services.connection_service.detect_transfer_pairs", new_callable=AsyncMock), \
+         patch("app.services.connection_service.stamp_primary_amount", new_callable=AsyncMock), \
+         patch("app.services.connection_service.apply_rules_to_transaction", new_callable=AsyncMock):
+        result_conn, _, _ = await sync_connection(session, conn.id, test_workspace.id, test_user.id)
+
+    assert result_conn.status == "active"
+    rows = (
+        await session.execute(
+            select(Account.external_id, Account.balance).where(
+                Account.connection_id == conn.id
+            )
+        )
+    ).all()
+    return {ext: balance for ext, balance in rows}, mock_provider
+
+
+def _holding(external_id, value, account_external_id=None):
+    return HoldingData(
+        external_id=external_id, name=f"Fund {external_id}", currency="BRL",
+        current_value=Decimal(value), account_external_id=account_external_id,
+    )
+
+
+@pytest.mark.asyncio
+async def test_sync_deducts_auto_invested_only_from_the_holding_account(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: a holding owned by one account must not shrink another
+    account of the same connection that also reports an auto-invested part."""
+    conn = await _make_connection(session, test_user.id, "Two Accounts Bank")
+    accounts = [
+        _auto_invest_account("acc-a", "1000", "400"),
+        _auto_invest_account("acc-b", "500", "300"),
+    ]
+
+    balances, _ = await _sync_accounts(
+        session, test_user, test_workspace, conn, accounts,
+        [_holding("fund-b", "300", account_external_id="acc-b")],
+    )
+
+    assert balances == {"acc-a": Decimal("1000"), "acc-b": Decimal("200")}
+
+
+@pytest.mark.asyncio
+async def test_sync_attributes_stored_holding_when_fetch_fails(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: with the fetch failing, the stored asset's per-account
+    wallet still says which account it mirrors, so only that one is
+    deducted."""
+    conn = await _make_connection(session, test_user.id, "Two Accounts Bank")
+    accounts = [
+        _auto_invest_account("acc-a", "1000", "400"),
+        _auto_invest_account("acc-b", "500", "300"),
+    ]
+    await _sync_accounts(
+        session, test_user, test_workspace, conn, accounts,
+        [_holding("fund-b", "300", account_external_id="acc-b")],
+    )
+
+    balances, provider = await _sync_accounts(
+        session, test_user, test_workspace, conn, accounts,
+        RuntimeError("investments unavailable"),
+    )
+
+    provider.get_holdings.assert_awaited_once()
+    assert balances == {"acc-a": Decimal("1000"), "acc-b": Decimal("200")}
+
+
+@pytest.mark.asyncio
+async def test_sync_unattributed_holding_does_not_deduct_from_every_account(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: a holding with no owning account cannot say which of two
+    auto-investing accounts it mirrors, so both keep the full balance."""
+    conn = await _make_connection(session, test_user.id, "Two Accounts Bank")
+    accounts = [
+        _auto_invest_account("acc-a", "1000", "400"),
+        _auto_invest_account("acc-b", "500", "300"),
+    ]
+
+    balances, _ = await _sync_accounts(
+        session, test_user, test_workspace, conn, accounts,
+        [_holding("fund-x", "400")],
+    )
+
+    assert balances == {"acc-a": Decimal("1000"), "acc-b": Decimal("500")}
+
+
+@pytest.mark.asyncio
+async def test_sync_unattributed_holding_deducts_the_only_auto_investing_account(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843 as reported: a checking account whose idle cash goes to a
+    fixed-income fund, next to accounts without that feature. The holding
+    carries no account, but only one account can be its source, so that
+    account is deducted and the others keep their balance."""
+    conn = await _make_connection(session, test_user.id, "Single Auto Bank")
+    accounts = [
+        _auto_invest_account("acc-checking", "1000", "400"),
+        _auto_invest_account("acc-savings", "250", "0", type="savings"),
+        _auto_invest_account("acc-card", "80", "0", type="credit_card"),
+    ]
+
+    balances, _ = await _sync_accounts(
+        session, test_user, test_workspace, conn, accounts,
+        [_holding("fund-x", "400")],
+    )
+
+    assert balances["acc-checking"] == Decimal("600")
+    assert balances["acc-savings"] == Decimal("250")
+    assert balances["acc-card"] == Decimal("80")
+
+
+@pytest.mark.asyncio
+async def test_sync_keeps_deducting_when_asset_sync_disabled_later(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Issue #843: turning asset sync off leaves the imported holding live in
+    net worth, so the account must keep the auto-invested part out instead
+    of going back to the gross balance. The holding is not touched."""
+    from app.services.connection_service import update_connection_settings
+
+    first, _ = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None,
+    )
+    assert first.balance == Decimal("600")
+    conn = await session.get(BankConnection, first.connection_id)
+    assert conn is not None
+    await update_connection_settings(
+        session, conn.id, test_workspace.id, {"sync_assets": False},
+    )
+
+    account, provider = await _sync_auto_invested_account(
+        session, test_user, test_workspace, settings=None, conn=conn,
+    )
+
+    provider.get_holdings.assert_not_awaited()
+    await session.refresh(account)
+    assert account.balance == Decimal("600")
+    asset = (
+        await session.execute(
+            select(Asset).where(Asset.external_id == "auto-inv-holding-1")
+        )
+    ).scalar_one()
+    assert asset.is_archived is False
+    assert asset.sell_date is None
 
 
 @pytest.mark.asyncio

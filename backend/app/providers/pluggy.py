@@ -380,7 +380,7 @@ def _auto_invested_portion(account: dict) -> Decimal:
 
     Pluggy's ``balance`` includes ``bankData.automaticallyInvestedBalance``.
     The provider only reports the portion here; the sync decides whether to
-    subtract it (only when the connection imports holdings). A malformed
+    subtract it (only when a live holding is counted for the account). A malformed
     payload or a non-positive balance yields zero, so the cash balance can
     never turn negative because of this field.
     """
