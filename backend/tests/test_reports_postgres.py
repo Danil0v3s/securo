@@ -328,3 +328,43 @@ async def test_reports_data_range_scoped_to_workspace(
     data = response.json()
     assert data["min_date"] == min(t.date for t in test_transactions).strftime("%Y-%m-%d")
     assert data["max_date"] == max(t.date for t in test_transactions).strftime("%Y-%m-%d")
+
+
+async def test_reports_data_range_excludes_ignored_rows(
+    client, auth_headers, session, test_user, test_account, test_transactions
+):
+    """Ignored rows, or rows in an ignored category, show in no report tab,
+    so they must not stretch the range either."""
+    from app.models.category import Category
+
+    ignored_category = Category(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        name="Ignored bucket",
+        icon="x",
+        color="#000000",
+        is_ignored=True,
+    )
+    session.add(ignored_category)
+    await session.commit()
+    session.add_all([
+        Transaction(
+            id=uuid.uuid4(),
+            user_id=test_user.id, account_id=test_account.id,
+            description="IGNORED PURCHASE", amount=Decimal("10.00"),
+            date=date(2012, 5, 1), type="debit", source="manual",
+            is_ignored=True,
+        ),
+        Transaction(
+            id=uuid.uuid4(),
+            user_id=test_user.id, account_id=test_account.id,
+            description="IGNORED CATEGORY PURCHASE", amount=Decimal("10.00"),
+            date=date(2013, 5, 1), type="debit", source="manual",
+            category_id=ignored_category.id,
+        ),
+    ])
+    await session.commit()
+    response = await client.get("/api/reports/data-range", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["min_date"] == min(t.date for t in test_transactions).strftime("%Y-%m-%d")
