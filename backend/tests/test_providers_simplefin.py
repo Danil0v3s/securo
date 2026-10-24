@@ -369,6 +369,59 @@ async def test_get_transactions_auth_errlist_with_requested_account_is_soft_warn
     assert any("con.auth" in rec.getMessage() for rec in caplog.records)
 
 
+@pytest.mark.asyncio
+async def test_get_transactions_expired_account_soft_skips_and_flags_reauth(caplog):
+    """A per-account auth expiry must skip the account, not abort (issue #1077).
+
+    The bridge answers a per-account query for an expired sub-connection
+    with no accounts plus a ``con.auth`` errlist entry. The provider
+    records the warning for the sync layer and returns what it has (nothing
+    for this account) instead of raising, so the rest of the connection
+    keeps syncing and the connection stays flagged for reauthorization.
+    """
+    import logging as stdlogging
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.params.get("account") == "acc-expired"
+        return httpx.Response(
+            200,
+            json={
+                "errlist": [
+                    {"code": "con.auth", "msg": "Authentication required", "conn_id": "C-B"}
+                ],
+                "accounts": [],
+            },
+        )
+
+    creds = {"access_url": "https://u:p@bridge.example/simplefin"}
+    provider = SimpleFinProvider()
+    with caplog.at_level(stdlogging.WARNING, logger="app.providers.simplefin"), _patched_client(handler):
+        txns = await provider.get_transactions(creds, "acc-expired", since=date(2026, 9, 1))
+
+    assert txns == []
+    assert [w["code"] for w in provider.action_required_warnings] == ["con.auth"]
+    assert any("reauthorization" in rec.getMessage() for rec in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_get_transactions_http_refusal_soft_skips_and_flags_reauth(caplog):
+    """An HTTP refusal of the per-account query must skip, not abort (issue #1077)."""
+    import logging as stdlogging
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.params.get("account") == "acc-expired"
+        return httpx.Response(403, text="authentication required")
+
+    creds = {"access_url": "https://u:p@bridge.example/simplefin"}
+    provider = SimpleFinProvider()
+    with caplog.at_level(stdlogging.WARNING, logger="app.providers.simplefin"), _patched_client(handler):
+        txns = await provider.get_transactions(creds, "acc-expired", since=date(2026, 9, 1))
+
+    assert txns == []
+    assert [w["code"] for w in provider.action_required_warnings] == ["credentials_invalid"]
+    assert any("refused" in rec.getMessage() for rec in caplog.records)
+
+
 # ----- transactions -----------------------------------------------------------
 
 

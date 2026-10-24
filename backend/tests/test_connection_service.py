@@ -933,6 +933,103 @@ async def test_sync_connection_partial_user_action_warning_marks_connection_erro
 
 
 @pytest.mark.asyncio
+async def test_sync_connection_simplefin_partial_expiry_keeps_healthy_account(
+    session: AsyncSession, test_user, test_workspace,
+):
+    """One expired sub-connection must not block the rest (issue #1077).
+
+    The real SimpleFinProvider runs against a fake bridge where one of the
+    two accounts needs reauthorization. The healthy account's new
+    transaction must still land, and the connection comes back flagged
+    (status "error") so the UI offers retry plus bridge reauthorization,
+    instead of the sync aborting and rolling the healthy account back.
+    """
+    import httpx
+
+    from app.providers.simplefin import SimpleFinProvider
+    from tests.test_providers_simplefin import _patched_client
+
+    conn = await _make_connection(session, test_user.id, "Bridge Bank")
+    conn.provider = "simplefin"
+    conn.credentials = {"access_url": "https://u:p@bridge.example/simplefin"}
+    await session.commit()
+    await session.refresh(conn)
+
+    now_epoch = int(datetime.now(timezone.utc).timestamp())
+    day = 86400
+    conn_a = {
+        "conn_id": "C-A", "name": "Bank A", "org_id": "A",
+        "org_url": "https://bank-a.example",
+    }
+    conn_b = {
+        "conn_id": "C-B", "name": "Bank B", "org_id": "B",
+        "org_url": "https://bank-b.example",
+    }
+    auth_err = {"code": "con.auth", "msg": "Authentication required", "conn_id": "C-B"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        account = request.url.params.get("account")
+        if account == "acc-healthy":
+            return httpx.Response(200, json={
+                "errlist": [],
+                "connections": [conn_a],
+                "accounts": [{
+                    "id": "acc-healthy", "name": "Checking", "currency": "USD",
+                    "balance": "100.00",
+                    "transactions": [{
+                        "id": "tx-healthy-new", "posted": now_epoch - day,
+                        "transacted_at": now_epoch - day,
+                        "amount": "-42.10", "description": "STORE PURCHASE",
+                    }],
+                }],
+            })
+        if account == "acc-expired":
+            # The bridge's documented partial-expiry shape for the per-account
+            # query: no data, con.auth in the errlist.
+            return httpx.Response(200, json={
+                "errlist": [auth_err],
+                "connections": [conn_b],
+                "accounts": [],
+            })
+        # Whole-connection query: both accounts still listed, B flagged stale.
+        return httpx.Response(200, json={
+            "errlist": [auth_err],
+            "connections": [conn_a, conn_b],
+            "accounts": [
+                {
+                    "id": "acc-healthy", "name": "Checking", "currency": "USD",
+                    "balance": "100.00", "balance-date": now_epoch - day,
+                },
+                {
+                    "id": "acc-expired", "name": "Savings", "currency": "USD",
+                    "balance": "50.00", "balance-date": now_epoch - 10 * day,
+                },
+            ],
+        })
+
+    provider = SimpleFinProvider()
+    with patch("app.services.connection_service.get_provider", return_value=provider), \
+         patch("app.services.connection_service.detect_transfer_pairs", new_callable=AsyncMock), \
+         patch("app.services.connection_service.stamp_primary_amount", new_callable=AsyncMock), \
+         patch("app.services.connection_service.apply_rules_to_transaction", new_callable=AsyncMock), \
+         _patched_client(handler):
+        result_conn, merged, outcome = await sync_connection(
+            session, conn.id, test_workspace.id, test_user.id
+        )
+
+    # The sync itself succeeds (no 409, no rollback of the healthy account)...
+    assert outcome == "refreshed"
+    healthy_tx = (await session.execute(
+        select(Transaction).where(Transaction.external_id == "tx-healthy-new")
+    )).scalar_one()
+    assert healthy_tx.description == "STORE PURCHASE"
+    # ...and the connection is flagged for reauthorization instead of the
+    # whole link being dead.
+    assert result_conn.status == "error"
+    assert any(w.get("code") == "con.auth" for w in provider.action_required_warnings)
+
+
+@pytest.mark.asyncio
 async def test_sync_connection_simplefin_rekey_does_not_duplicate_account_or_tx(
     session: AsyncSession, test_user, test_workspace,
 ):
