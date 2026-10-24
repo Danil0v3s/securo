@@ -2034,6 +2034,8 @@
     "rangeLastMonth": "先月",
     "periodPrev": "前の期間",
     "periodNext": "次の期間",
+    "year": "年",
+    "yearPickerHelp": "データの1暦年を表示",
     "intervalDaily": "日",
     "intervalWeekly": "週",
     "intervalMonthly": "月",

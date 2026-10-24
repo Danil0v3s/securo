@@ -2034,6 +2034,8 @@
     "rangeLastMonth": "पिछला महीना",
     "periodPrev": "पिछली अवधि",
     "periodNext": "अगली अवधि",
+    "year": "वर्ष",
+    "yearPickerHelp": "अपने डेटा का एक कैलेंडर वर्ष दिखाएं",
     "intervalDaily": "दि",
     "intervalWeekly": "सा",
     "intervalMonthly": "मा",

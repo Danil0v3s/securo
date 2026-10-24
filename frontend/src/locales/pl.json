@@ -2123,6 +2123,8 @@
     "rangeLastMonth": "Miesiąc ubiegły",
     "periodPrev": "Poprzedni okres",
     "periodNext": "Następny okres",
+    "year": "Rok",
+    "yearPickerHelp": "Pokaż jeden rok kalendarzowy swoich danych",
     "intervalDaily": "D",
     "intervalWeekly": "T",
     "intervalMonthly": "M",

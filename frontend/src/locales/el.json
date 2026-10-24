@@ -2090,6 +2090,8 @@
     "rangeLastMonth": "Προηγούμενος μήνας",
     "periodPrev": "Προηγούμενη περίοδος",
     "periodNext": "Επόμενη περίοδος",
+    "year": "Έτος",
+    "yearPickerHelp": "Εμφάνιση ενός ημερολογιακού έτους των δεδομένων σας",
     "intervalDaily": "Η",
     "intervalWeekly": "Ε",
     "intervalMonthly": "Μ",

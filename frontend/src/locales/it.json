@@ -2038,6 +2038,8 @@
     "rangeLastMonth": "Mese scorso",
     "periodPrev": "Periodo precedente",
     "periodNext": "Periodo successivo",
+    "year": "Anno",
+    "yearPickerHelp": "Mostra un anno solare dei tuoi dati",
     "intervalDaily": "G",
     "intervalWeekly": "S",
     "intervalMonthly": "M",

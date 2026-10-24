@@ -2150,6 +2150,8 @@
     "rangeLastMonth": "Minulý mesiac",
     "periodPrev": "Predchádzajúce obdobie",
     "periodNext": "Nasledujúce obdobie",
+    "year": "Rok",
+    "yearPickerHelp": "Zobraziť jeden kalendárny rok svojich dát",
     "intervalDaily": "D",
     "intervalWeekly": "T",
     "intervalMonthly": "M",

@@ -2166,6 +2166,8 @@
     "rangeLastMonth": "Minulý měsíc",
     "periodPrev": "Předchozí období",
     "periodNext": "Následující období",
+    "year": "Rok",
+    "yearPickerHelp": "Zobrazit jeden kalendářní rok svých dat",
     "intervalDaily": "D",
     "intervalWeekly": "T",
     "intervalMonthly": "M",

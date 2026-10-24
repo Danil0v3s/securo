@@ -2036,6 +2036,8 @@
     "rangeLastMonth": "Vorige maand",
     "periodPrev": "Vorige periode",
     "periodNext": "Volgende periode",
+    "year": "Jaar",
+    "yearPickerHelp": "Eén kalenderjaar van je gegevens tonen",
     "intervalDaily": "D",
     "intervalWeekly": "W",
     "intervalMonthly": "M",

@@ -19,7 +19,7 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from 'recharts'
-import { AlertCircle, ChevronLeft, ChevronRight, HelpCircle, X } from 'lucide-react'
+import { AlertCircle, CalendarDays, ChevronLeft, ChevronRight, HelpCircle, X } from 'lucide-react'
 import { reports } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -365,6 +365,38 @@ export default function ReportsPage() {
     if (!nextTab.intervalOptions.some((i) => i.value === interval)) {
       setInterval(nextTab.fallbackInterval)
     }
+  }
+
+  // Year picker (issue #765): one entry per year the workspace's data
+  // covers, from this year back to the oldest transaction. Hidden until the
+  // data spans at least two years, and never on Cash Flow, which has no
+  // custom range a picked year can be committed into.
+  const { data: dataRange } = useQuery({
+    queryKey: ['reports', 'data-range'],
+    queryFn: reports.dataRange,
+    staleTime: 5 * 60 * 1000,
+  })
+  const todayStr = todayInTimezone(timeZone)
+  const currentYear = Number(todayStr.slice(0, 4))
+  const minYear = dataRange?.min_date ? Number(dataRange.min_date.slice(0, 4)) : null
+  const yearOptions =
+    minYear !== null && minYear < currentYear
+      ? Array.from({ length: currentYear - minYear + 1 }, (_, i) => currentYear - i)
+      : []
+  // The year a committed custom range covers exactly: Jan 1 through
+  // Dec 31, or through today for the current year.
+  const activeYear = yearOptions.find(
+    (year) =>
+      isCustomRange &&
+      customFrom === `${year}-01-01` &&
+      customTo === (year === currentYear ? todayStr : `${year}-12-31`),
+  )
+  const handleYearPick = (year: number) => {
+    setCustomFrom(`${year}-01-01`)
+    setCustomTo(year === currentYear ? todayStr : `${year}-12-31`)
+    setRangeKey(CUSTOM_RANGE_KEY)
+    setPeriodOffset(0)
+    setSelectedDate(null)
   }
 
   const { data, isLoading, isError, error, refetch } = useQuery<ReportResponse>({
@@ -733,6 +765,43 @@ export default function ReportsPage() {
                   label={t('reports.customRange')}
                   placeholder={t('reports.pickCustomRange')}
                 />
+              )}
+              {supportsCustomRange && yearOptions.length > 1 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={activeYear !== undefined ? `${t('reports.year')} ${activeYear}` : t('reports.year')}
+                      title={t('reports.yearPickerHelp')}
+                      className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        activeYear !== undefined
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      }`}
+                    >
+                      <CalendarDays className="mr-1 inline h-3.5 w-3.5" />
+                      {activeYear !== undefined ? activeYear : t('reports.year')}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-1">
+                    <div className="max-h-64 overflow-y-auto">
+                      {yearOptions.map((year) => (
+                        <button
+                          key={year}
+                          type="button"
+                          onClick={() => handleYearPick(year)}
+                          className={`block w-full px-3 py-1.5 text-left text-xs font-semibold transition-colors ${
+                            activeYear === year
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                          }`}
+                        >
+                          {year}
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
             {/* Period navigation (issue #519): step the active window back and

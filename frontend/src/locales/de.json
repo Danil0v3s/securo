@@ -2035,6 +2035,8 @@
     "rangeLastMonth": "Letzter Monat",
     "periodPrev": "Vorheriger Zeitraum",
     "periodNext": "Nächster Zeitraum",
+    "year": "Jahr",
+    "yearPickerHelp": "Ein Kalenderjahr deiner Daten anzeigen",
     "intervalDaily": "T",
     "intervalWeekly": "W",
     "intervalMonthly": "M",

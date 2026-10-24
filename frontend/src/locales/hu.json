@@ -2034,6 +2034,8 @@
     "rangeLastMonth": "Múlt hónap",
     "periodPrev": "Előző időszak",
     "periodNext": "Következő időszak",
+    "year": "Év",
+    "yearPickerHelp": "Egy naptári év megjelenítése az adataidból",
     "intervalDaily": "N",
     "intervalWeekly": "Hé",
     "intervalMonthly": "Hó",

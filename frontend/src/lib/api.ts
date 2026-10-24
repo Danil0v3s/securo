@@ -1571,6 +1571,13 @@ export const reports = {
     const { data } = await api.get('/reports/cash-flow', { params: { months, interval, baseline, ...(extra.params ?? {}) }, ...(extra.paramsSerializer ? { paramsSerializer: extra.paramsSerializer } : {}) })
     return data
   },
+  // Oldest and newest transaction dates in the workspace (opening
+  // balances excluded). The reports page builds its year picker from
+  // these bounds (issue #765).
+  dataRange: async (): Promise<{ min_date: string | null; max_date: string | null }> => {
+    const { data } = await api.get('/reports/data-range')
+    return data
+  },
 }
 
 // Currencies

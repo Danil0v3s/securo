@@ -318,6 +318,32 @@ def _date_points(
     return points
 
 
+async def get_report_data_range(
+    session: AsyncSession,
+    workspace_id: uuid.UUID,
+) -> tuple[date | None, date | None]:
+    """The span of transaction data the workspace actually has (issue #765).
+
+    Feeds the Reports page year picker: the UI lists one entry per year
+    between the lower bound and the current year. Buckets by the same
+    reporting date the reports aggregate on, so a year only shows up when
+    the reports can actually display it. Opening balances are excluded,
+    their dates are synthetic.
+    """
+    accounting_mode = await get_credit_card_accounting_mode(session)
+    result = await session.execute(
+        select(
+            func.min(reporting_date_col(accounting_mode)),
+            func.max(reporting_date_col(accounting_mode)),
+        ).where(
+            Transaction.workspace_id == workspace_id,
+            Transaction.source != "opening_balance",
+        )
+    )
+    min_date, max_date = result.one()
+    return min_date, max_date
+
+
 async def get_net_worth_report(
     session: AsyncSession,
     workspace_id: uuid.UUID,

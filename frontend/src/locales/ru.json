@@ -2051,6 +2051,8 @@
     "rangeLastMonth": "Прошлый месяц",
     "periodPrev": "Предыдущий период",
     "periodNext": "Следующий период",
+    "year": "Год",
+    "yearPickerHelp": "Показать один календарный год ваших данных",
     "intervalDaily": "Д",
     "intervalWeekly": "Н",
     "intervalMonthly": "М",
