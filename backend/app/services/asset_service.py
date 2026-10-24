@@ -895,10 +895,14 @@ async def get_portfolio_trend(
     # instead of summing raw foreign amounts at a fake 1:1 rate (issue
     # #574); the holdings table still shows them in their original currency
     # flagged as unconverted.
+    # One lookup per distinct currency: a missing rate can trigger a
+    # provider sync, which must not repeat for every asset in it.
+    convertible_currencies = {primary_currency}
+    for currency in {asset.currency for asset in active_assets} - {primary_currency}:
+        if await has_rate(session, currency, primary_currency):
+            convertible_currencies.add(currency)
     convertible_assets = [
-        asset for asset in active_assets
-        if asset.currency == primary_currency
-        or await has_rate(session, asset.currency, primary_currency)
+        asset for asset in active_assets if asset.currency in convertible_currencies
     ]
     if not convertible_assets:
         return {"assets": [], "trend": [], "total": 0.0}

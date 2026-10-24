@@ -503,3 +503,55 @@ class TestAssetListMissingFxRate:
         assert gbp["current_value"] == pytest.approx(500.0)
         assert gbp["current_value_primary"] is None
         assert gbp["gain_loss_primary"] is None
+
+    @pytest.mark.asyncio
+    async def test_refresh_price_leaves_primary_null_without_a_rate(
+        self,
+        client: AsyncClient,
+        auth_headers: dict,
+        session: AsyncSession,
+        usd_user: User,
+        test_workspace: Workspace,
+    ):
+        """The refresh endpoint stamps the primary fields on its own, so it
+        must apply the same rule as the list: no GBP rate, no fake value."""
+        asset = Asset(
+            id=uuid.uuid4(),
+            user_id=usd_user.id,
+            workspace_id=test_workspace.id,
+            name="Listed",
+            type="stock",
+            currency="GBP",
+            ticker="LSE",
+            units=Decimal("10"),
+            valuation_method="market_price",
+            purchase_price=Decimal("40"),
+            position=0,
+        )
+        session.add(asset)
+        session.add(AssetValue(
+            id=uuid.uuid4(),
+            asset_id=asset.id,
+            workspace_id=test_workspace.id,
+            amount=Decimal("500"),
+            price=Decimal("50"),
+            date=date.today(),
+            source="sync",
+        ))
+        await session.commit()
+
+        headers = {**auth_headers, "X-Workspace-Id": str(test_workspace.id)}
+        with patch(
+            "app.services.asset_service.refresh_market_price_asset",
+            new=AsyncMock(return_value=True),
+        ):
+            response = await client.post(
+                f"/api/assets/{asset.id}/refresh-price", headers=headers
+            )
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["current_value"] is not None
+        assert body["gain_loss"] is not None
+        assert body["current_value_primary"] is None
+        assert body["gain_loss_primary"] is None
