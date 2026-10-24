@@ -2674,7 +2674,7 @@
       },
       "recurringAuditor": {
         "name": "Audit opakujúcich sa platieb",
-        "description": "Vypíše vaše odbory a upozorní na zabudnuté, duplicitné alebo zdražené platby."
+        "description": "Vypíše vaše predplatné a upozorní na zabudnuté, duplicitné alebo zdražené platby."
       }
     },
     "title": "Agenti",

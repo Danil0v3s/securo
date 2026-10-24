@@ -31,17 +31,17 @@ export default function AgentsListPage() {
     mutationFn: async (tpl: AgentTemplate) => {
       const conn = connections?.find((c) => c.is_default) ?? connections?.[0]
       if (!conn) throw new Error('no connection')
-      const agent = await agents.create({
+      // The tool scope goes in the create call itself, so the agent and its
+      // whitelist are saved together: there is no window where it exists
+      // without one (which the backend reads as "every tool allowed").
+      return agents.create({
         name: t(tpl.nameKey),
         description: t(tpl.descriptionKey),
         system_prompt: tpl.systemPrompt,
         connection_id: conn.id,
         auto_context: true,
+        tools: tpl.tools.map((tool) => ({ server: BUILTIN_MCP_SERVER, tool_name: tool, enabled: true })),
       })
-      if (tpl.tools.length > 0) {
-        await agents.setTools(agent.id, tpl.tools.map((tool) => ({ server: BUILTIN_MCP_SERVER, tool_name: tool, enabled: true })))
-      }
-      return agent
     },
     onMutate: (tpl) => setCreatingId(tpl.id),
     onSettled: () => setCreatingId(null),

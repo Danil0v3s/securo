@@ -88,11 +88,26 @@ describe('agents page templates', () => {
     expect(payload.connection_id).toBe('conn-2')
     expect(payload.system_prompt).toContain("savings advisor")
     expect(payload.auto_context).toBe(true)
-    await waitFor(() => expect(api.setTools).toHaveBeenCalledTimes(1))
-    const [agentId, items] = api.setTools.mock.calls[0] as [string, { server: string; tool_name: string; enabled: boolean }[]]
-    expect(agentId).toBe('agent-new')
+    // The tool scope is part of the create call, never a second request
+    // that could fail and leave the agent with every tool allowed.
+    const items = payload.tools as { server: string; tool_name: string; enabled: boolean }[]
     expect(items).toContainEqual({ server: 'securo', tool_name: 'propose_create_budget', enabled: true })
     expect(items).toHaveLength(AGENT_TEMPLATES[0].tools.length)
+    expect(api.setTools).not.toHaveBeenCalled()
+  })
+
+  it('leaves no agent behind when the one-click creation fails', async () => {
+    api.connections.list.mockResolvedValue([CONN_A])
+    api.create.mockRejectedValue(new Error('boom'))
+    const user = userEvent.setup()
+    renderWithProviders(<AgentsListPage />)
+    await screen.findByText('Savings advisor')
+    await user.click(screen.getAllByRole('button', { name: 'Create' })[0])
+    await waitFor(() => expect(api.create).toHaveBeenCalledTimes(1))
+    // A single request carries the agent and its tools: when it fails there
+    // is nothing to follow up with, and no separate tool call is attempted.
+    expect(api.setTools).not.toHaveBeenCalled()
+    expect(api.list).toHaveBeenCalledTimes(1)
   })
 
   it('opens the form prefilled when no LLM connection exists yet', async () => {
@@ -122,9 +137,8 @@ describe('agents page templates', () => {
     await waitFor(() => expect(submit).toBeEnabled())
     await user.click(submit)
     await waitFor(() => expect(api.create).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(api.setTools).toHaveBeenCalledTimes(1))
-    const [agentId, items] = api.setTools.mock.calls[0] as [string, { server: string; tool_name: string }[]]
-    expect(agentId).toBe('agent-new')
-    expect(items.map((i) => i.tool_name)).toEqual(AGENT_TEMPLATES[2].tools)
+    const payload = api.create.mock.calls[0][0] as { tools: { tool_name: string }[] }
+    expect(payload.tools.map((i) => i.tool_name)).toEqual(AGENT_TEMPLATES[2].tools)
+    expect(api.setTools).not.toHaveBeenCalled()
   })
 })

@@ -92,19 +92,17 @@ export function AgentFormDialog({ open, onOpenChange, agent, preset }: Props) {
   const selectedConnection = connections?.find((c) => c.id === connectionId)
 
   const saveMut = useMutation({
-    mutationFn: async (payload: Partial<Agent> & { name: string }) => {
-      if (isEdit && agent) return agents.update(agent.id, payload)
-      const created = await agents.create(payload)
-      // An agent started from a template gets the template's tool scope,
-      // the same as the one-click path on the Agents page.
-      if (preset && preset.tools.length > 0) {
-        await agents.setTools(
-          created.id,
-          preset.tools.map((tool) => ({ server: BUILTIN_MCP_SERVER, tool_name: tool, enabled: true })),
-        )
-      }
-      return created
-    },
+    mutationFn: (payload: Partial<Agent> & { name: string }) =>
+      isEdit && agent
+        ? agents.update(agent.id, payload)
+        : agents.create({
+            ...payload,
+            // An agent started from a template is saved with the template's
+            // tool scope in the same call, like the one-click path.
+            ...(preset && preset.tools.length > 0
+              ? { tools: preset.tools.map((tool) => ({ server: BUILTIN_MCP_SERVER, tool_name: tool, enabled: true })) }
+              : {}),
+          }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['agents'] })
       onOpenChange(false)
