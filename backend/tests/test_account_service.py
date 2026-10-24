@@ -923,6 +923,121 @@ async def test_get_account_summary_bill_unpaired_payment_credit_still_nets_out(
 
 
 @pytest.mark.asyncio
+async def test_get_account_summary_bill_nets_paired_payment_when_cycle_starts_flat(
+    session: AsyncSession, test_user, test_workspace
+):
+    """An intermediate payment into the card (the credit leg of a paired
+    transfer) nets against the bill total when the window started with no
+    prior debt: nothing older exists for the payment to settle, so the
+    bank bills the net (issue #668)."""
+    account = await _make_account(session, test_user.id, "CC Mid Pay", acc_type="credit_card")
+    today = date.today()
+    pair_id = uuid.uuid4()
+
+    await _add_txn(session, test_user.id, account.id, 1000, "debit", today)
+    await _add_txn(session, test_user.id, account.id, 100, "credit", today)
+    await _add_txn(session, test_user.id, account.id, 400, "credit", today,
+                   transfer_pair_id=pair_id)
+
+    summary = await get_account_summary(session, account.id, test_workspace.id)
+    assert summary is not None
+    # 1000 (charge) - 100 (refund) - 400 (intermediate payment) = 500
+    assert summary["monthly_expenses"] == pytest.approx(500.0)
+    # the payment is not income; the refund still is
+    assert summary["monthly_income"] == pytest.approx(100.0)
+
+
+@pytest.mark.asyncio
+async def test_get_account_summary_bill_nets_only_payment_beyond_prior_debt(
+    session: AsyncSession, test_user, test_workspace
+):
+    """With last cycle's bill still open when the window starts, a payment
+    first settles that older debt; only the excess nets this cycle's bill
+    total (issue #668)."""
+    account = await _make_account(session, test_user.id, "CC Mid Pay Prior", acc_type="credit_card")
+    today = date.today()
+    last_month = today.replace(day=1) - timedelta(days=1)
+
+    await _add_txn(session, test_user.id, account.id, 800, "debit", last_month)
+    await _add_txn(session, test_user.id, account.id, 1000, "debit", today)
+    # 800 pays last cycle's bill, 400 is the intermediate payment.
+    await _add_txn(session, test_user.id, account.id, 800, "credit", today,
+                   transfer_pair_id=uuid.uuid4())
+    await _add_txn(session, test_user.id, account.id, 400, "credit", today,
+                   transfer_pair_id=uuid.uuid4())
+
+    summary = await get_account_summary(session, account.id, test_workspace.id)
+    assert summary is not None
+    assert summary["monthly_expenses"] == pytest.approx(600.0)
+    assert summary["projected_expenses"] == pytest.approx(600.0)
+    assert summary["monthly_income"] == pytest.approx(0.0)
+
+
+@pytest.mark.asyncio
+async def test_get_account_summary_bill_payment_of_prior_debt_leaves_cycle_total(
+    session: AsyncSession, test_user, test_workspace
+):
+    """Paying only last cycle's bill inside this window does not reduce
+    this cycle's bill total (issue #668)."""
+    account = await _make_account(session, test_user.id, "CC Prior Only", acc_type="credit_card")
+    today = date.today()
+    last_month = today.replace(day=1) - timedelta(days=1)
+
+    await _add_txn(session, test_user.id, account.id, 800, "debit", last_month)
+    await _add_txn(session, test_user.id, account.id, 1000, "debit", today)
+    await _add_txn(session, test_user.id, account.id, 800, "credit", today,
+                   transfer_pair_id=uuid.uuid4())
+
+    summary = await get_account_summary(session, account.id, test_workspace.id)
+    assert summary is not None
+    assert summary["monthly_expenses"] == pytest.approx(1000.0)
+    assert summary["projected_expenses"] == pytest.approx(1000.0)
+
+
+@pytest.mark.asyncio
+async def test_get_account_summary_bill_nets_paired_payment_with_transfer_category(
+    session: AsyncSession, test_user, test_workspace
+):
+    """A paired payment filed under a transfer-like category still nets
+    the bill total: the transfer pair already proves it is a payment, so
+    the category tag cannot flip it back into 'not a payment'
+    (issue #668)."""
+    account = await _make_account(session, test_user.id, "CC Mid Pay Cat", acc_type="credit_card")
+    today = date.today()
+    pair_id = uuid.uuid4()
+    transfer_cat = await _make_category(session, test_user.id, treat_as_transfer=True)
+
+    await _add_txn(session, test_user.id, account.id, 1000, "debit", today)
+    await _add_txn(session, test_user.id, account.id, 400, "credit", today,
+                   transfer_pair_id=pair_id, category_id=transfer_cat.id)
+
+    summary = await get_account_summary(session, account.id, test_workspace.id)
+    assert summary is not None
+    assert summary["monthly_expenses"] == pytest.approx(600.0)
+
+
+@pytest.mark.asyncio
+async def test_get_account_summary_bill_nets_pending_paired_payment_in_projection(
+    session: AsyncSession, test_user, test_workspace
+):
+    """A payment the user marked pending still nets the projected bill
+    total: the projection is the final-bill estimate, and a scheduled
+    payment is part of it (issue #668)."""
+    account = await _make_account(session, test_user.id, "CC Mid Pay Pending", acc_type="credit_card")
+    today = date.today()
+    pair_id = uuid.uuid4()
+
+    await _add_txn(session, test_user.id, account.id, 1000, "debit", today)
+    await _add_txn(session, test_user.id, account.id, 400, "credit", today,
+                   transfer_pair_id=pair_id, status="pending")
+
+    summary = await get_account_summary(session, account.id, test_workspace.id)
+    assert summary is not None
+    assert summary["monthly_expenses"] == pytest.approx(1000.0)
+    assert summary["projected_expenses"] == pytest.approx(600.0)
+
+
+@pytest.mark.asyncio
 async def test_get_account_summary_bill_excludes_ignored_category_charge(
     session: AsyncSession, test_user, test_workspace
 ):
