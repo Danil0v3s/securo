@@ -23,7 +23,7 @@ from app.providers.market_price import (
 )
 from app.schemas.asset import AssetCreate, AssetUpdate, AssetValueCreate, AssetRead, AssetValueRead
 from app.services.asset_group_service import ensure_group_in_workspace
-from app.services.fx_rate_service import convert, stamp_primary_amount
+from app.services.fx_rate_service import convert, has_rate, stamp_primary_amount
 
 logger = logging.getLogger(__name__)
 
@@ -889,6 +889,20 @@ async def get_portfolio_trend(
     # Get user's primary currency for conversion
     user = await session.get(User, user_id) if user_id is not None else None
     primary_currency = user.primary_currency if user else get_settings().default_currency
+
+    # Assets whose currency has no resolvable FX rate cannot be expressed in
+    # the primary currency. Excluding them keeps the chart's total honest
+    # instead of summing raw foreign amounts at a fake 1:1 rate (issue
+    # #574); the holdings table still shows them in their original currency
+    # flagged as unconverted.
+    convertible_assets = [
+        asset for asset in active_assets
+        if asset.currency == primary_currency
+        or await has_rate(session, asset.currency, primary_currency)
+    ]
+    if not convertible_assets:
+        return {"assets": [], "trend": [], "total": 0.0}
+    active_assets = convertible_assets
 
     values_map = await _load_asset_native_values(session, active_assets)
 

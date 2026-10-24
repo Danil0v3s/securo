@@ -24,7 +24,7 @@ export function PropertyEquitySummary({
 }) {
   const { t } = useTranslation()
   const linked = loans.filter(loan => loan.type === 'loan' && loan.secured_asset_id === asset.id)
-  const equity = getPropertyEquity(asset, linked)
+  const equity = getPropertyEquity(asset, linked, currency)
   if (linked.length === 0 || !equity) return null
 
   return (
