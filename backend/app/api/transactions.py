@@ -7,7 +7,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.app_clock import app_today
@@ -78,7 +78,9 @@ async def _attach_transfer_counterparts(
             Transaction.id,
             Transaction.transfer_pair_id,
             Transaction.account_id,
-            Account.name,
+            # The name the rest of the UI shows: the user's override, or
+            # the provider's name when there is none.
+            func.coalesce(Account.display_name, Account.name),
         )
         .join(Account, Account.id == Transaction.account_id)
         .where(

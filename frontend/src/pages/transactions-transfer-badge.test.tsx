@@ -14,7 +14,7 @@ import { screen, waitFor } from '@testing-library/react'
 import TransactionsPage from '@/pages/transactions'
 import { MobileTransactionRow } from '@/components/mobile-transaction-row'
 import { renderWithProviders } from '@/test/utils'
-import type { Transaction } from '@/types'
+import type { Account, Transaction } from '@/types'
 
 const api = vi.hoisted(() => ({
   transactions: { list: vi.fn(), update: vi.fn(), delete: vi.fn(), create: vi.fn() },
@@ -155,11 +155,12 @@ describe('transfer rows in the transactions list', () => {
     await waitFor(() => expect(screen.queryByText('Transfer out')).not.toBeInTheDocument())
   })
 
-  it('tooltips the linked account on the mobile row icon', () => {
+  it('names the linked account next to the account on the mobile row', () => {
+    const checking = { id: 'acc-1', name: 'Checking', display_name: null, type: 'checking' } as unknown as Account
     renderWithProviders(
       <MobileTransactionRow
         tx={rows[0]}
-        account={undefined}
+        account={checking}
         groupName={undefined}
         selected={false}
         selectable={false}
@@ -172,9 +173,9 @@ describe('transfer rows in the transactions list', () => {
       />,
     )
 
-    // rows[0] is linked to 'Savings'; the icon carries its name as a
-    // tooltip on the mobile row.
-    const icon = screen.getByTitle('Savings')
-    expect(icon.querySelector('svg')).not.toBeNull()
+    // rows[0] is linked to 'Savings': the name is visible text on the row,
+    // so it works on touch, not only as a hover tooltip.
+    expect(screen.getByText('Checking')).toBeInTheDocument()
+    expect(screen.getByText('Savings')).toBeInTheDocument()
   })
 })

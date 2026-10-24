@@ -188,3 +188,21 @@ async def test_transfer_counterpart_stays_inside_the_workspace(
     assert resp2.status_code == 200
     friend_rows = {t["id"]: t for t in resp2.json()["items"]}
     assert friend_rows[str(intruder.id)]["transfer_counterpart"] is None
+
+
+@pytest.mark.asyncio
+async def test_counterpart_uses_the_account_display_name(
+    client: AsyncClient, auth_headers, session: AsyncSession, transfer_pair, transfer_accounts
+):
+    """The badge shows the same name as the rest of the UI: the user's
+    display name when set, the account name otherwise."""
+    leg_out, leg_in, _ = transfer_pair
+    _, savings = transfer_accounts
+    savings.display_name = "Reserva"
+    await session.commit()
+
+    resp = await client.get("/api/transactions", headers=auth_headers)
+    assert resp.status_code == 200
+    by_id = {t["id"]: t for t in resp.json()["items"]}
+    assert by_id[str(leg_out.id)]["transfer_counterpart"]["account_name"] == "Reserva"
+    assert by_id[str(leg_in.id)]["transfer_counterpart"]["account_name"] == "Conta Corrente"
