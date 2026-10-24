@@ -2597,7 +2597,13 @@ async def sync_connection(
         for orphan in orphaned_institutions.scalars().all():
             await session.delete(orphan)
 
-        connection.last_sync_at = datetime.now(timezone.utc)
+        # An account whose fetch was cut short (issue #1077) is missing the
+        # rest of the window. The next fetch starts from last_sync_at, so
+        # moving it forward would leave that gap behind for good once the
+        # user reauthorizes; keep it until every account fetched in full.
+        # The healthy accounts just re-read a longer window, deduplicated.
+        if not incomplete_fetch_account_ids:
+            connection.last_sync_at = datetime.now(timezone.utc)
         action_required_warnings = getattr(provider, "action_required_warnings", None)
         if isinstance(action_required_warnings, list) and action_required_warnings:
             logger.warning(

@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -952,6 +952,8 @@ async def test_sync_connection_simplefin_partial_expiry_keeps_healthy_account(
     conn = await _make_connection(session, test_user.id, "Bridge Bank")
     conn.provider = "simplefin"
     conn.credentials = {"access_url": "https://u:p@bridge.example/simplefin"}
+    previous_sync = datetime.now(timezone.utc) - timedelta(days=5)
+    conn.last_sync_at = previous_sync
     await session.commit()
     await session.refresh(conn)
 
@@ -1027,6 +1029,11 @@ async def test_sync_connection_simplefin_partial_expiry_keeps_healthy_account(
     # whole link being dead.
     assert result_conn.status == "error"
     assert any(w.get("code") == "con.auth" for w in provider.action_required_warnings)
+    # The expired account fetched nothing, so the sync cursor stays put: once
+    # the bank is reauthorized, the next sync still covers the missed days.
+    kept = result_conn.last_sync_at
+    assert kept is not None
+    assert kept.replace(tzinfo=timezone.utc) == previous_sync
 
 
 @pytest.mark.asyncio
