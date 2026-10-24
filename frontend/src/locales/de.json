@@ -2662,7 +2662,9 @@
         "create_recurring_transaction": "Wiederkehrende Transaktion hinzufügen",
         "update_recurring_transaction": "Wiederkehrende Transaktion aktualisieren",
         "cancel_recurring_transaction": "Wiederkehrende Transaktion kündigen",
-        "create_goal": "Ziel erstellen"
+        "create_goal": "Ziel erstellen",
+        "link_transfer": "Als Überweisung verknüpfen",
+        "unlink_transfer": "Überweisung trennen"
       },
       "summary": {
         "categorize": "{{count}} Transaktion(en) → {{category}}",
@@ -2674,7 +2676,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "Zukünftige Vorkommen von “{{description}}” stoppen (Verlauf bleibt erhalten)",
         "deleteRecurring": "“{{description}}” dauerhaft löschen",
-        "createGoal": "“{{name}}” — Ziel {{target}}, Frist {{deadline}}"
+        "createGoal": "“{{name}}” — Ziel {{target}}, Frist {{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} und {{to}} werden wieder normale Transaktionen"
       }
     },
     "conversation": {

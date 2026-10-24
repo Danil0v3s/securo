@@ -2752,7 +2752,9 @@
         "create_recurring_transaction": "Dodaj transakcję cykliczną",
         "update_recurring_transaction": "Zaktualizuj transakcję cykliczną",
         "cancel_recurring_transaction": "Anuluj transakcję cykliczną",
-        "create_goal": "Utwórz cel"
+        "create_goal": "Utwórz cel",
+        "link_transfer": "Połącz jako przelew",
+        "unlink_transfer": "Rozłącz przelew"
       },
       "summary": {
         "categorize_one": "{{count}} transakcja → {{category}}",
@@ -2767,7 +2769,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "Zatrzymaj przyszłe wystąpienia „{{description}}” (historia zachowana)",
         "deleteRecurring": "Trwale usuń „{{description}}”",
-        "createGoal": "„{{name}}” — cel {{target}}, termin {{deadline}}"
+        "createGoal": "„{{name}}” — cel {{target}}, termin {{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} i {{to}} znów będą zwykłymi transakcjami"
       }
     },
     "conversation": {

@@ -2661,7 +2661,9 @@
         "create_recurring_transaction": "定期取引を追加",
         "update_recurring_transaction": "定期取引を更新",
         "cancel_recurring_transaction": "定期取引を中止",
-        "create_goal": "目標を作成"
+        "create_goal": "目標を作成",
+        "link_transfer": "振替としてリンク",
+        "unlink_transfer": "振替のリンクを解除"
       },
       "summary": {
         "categorize": "{{count}}件の取引 → {{category}}",
@@ -2673,7 +2675,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "「{{description}}」の今後の発生を停止(履歴は保持)",
         "deleteRecurring": "「{{description}}」を完全に削除",
-        "createGoal": "「{{name}}」 — 目標{{target}}、期日{{deadline}}"
+        "createGoal": "「{{name}}」 — 目標{{target}}、期日{{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} と {{to}} は通常の取引に戻ります"
       }
     },
     "conversation": {

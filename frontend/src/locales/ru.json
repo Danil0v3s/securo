@@ -2678,7 +2678,9 @@
         "create_recurring_transaction": "Добавить регулярную транзакцию",
         "update_recurring_transaction": "Обновить регулярную транзакцию",
         "cancel_recurring_transaction": "Отменить регулярную транзакцию",
-        "create_goal": "Создать цель"
+        "create_goal": "Создать цель",
+        "link_transfer": "Связать как перевод",
+        "unlink_transfer": "Разорвать связь перевода"
       },
       "summary": {
         "categorize": "{{count}} транзакций → {{category}}",
@@ -2690,7 +2692,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "Остановить будущие повторения «{{description}}» (история сохранена)",
         "deleteRecurring": "Навсегда удалить «{{description}}»",
-        "createGoal": "«{{name}}» — цель {{target}}, срок {{deadline}}"
+        "createGoal": "«{{name}}» — цель {{target}}, срок {{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} и {{to}} снова станут обычными операциями"
       }
     },
     "conversation": {

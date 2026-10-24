@@ -2661,7 +2661,9 @@
         "create_recurring_transaction": "Προσθήκη επαναλαμβανόμενης συναλλαγής",
         "update_recurring_transaction": "Ενημέρωση επαναλαμβανόμενης συναλλαγής",
         "cancel_recurring_transaction": "Ακύρωση επαναλαμβανόμενης συναλλαγής",
-        "create_goal": "Δημιουργία στόχου"
+        "create_goal": "Δημιουργία στόχου",
+        "link_transfer": "Σύνδεση ως μεταφορά",
+        "unlink_transfer": "Αποσύνδεση μεταφοράς"
       },
       "summary": {
         "categorize": "{{count}} συναλλαγή(ές) → {{category}}",
@@ -2673,7 +2675,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "Διακοπή μελλοντικών εμφανίσεων του «{{description}}» (διατήρηση ιστορικού)",
         "deleteRecurring": "Οριστική διαγραφή του «{{description}}»",
-        "createGoal": "«{{name}}» — στόχος {{target}}, προθεσμία {{deadline}}"
+        "createGoal": "«{{name}}» — στόχος {{target}}, προθεσμία {{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} και {{to}} γίνονται ξανά κανονικές συναλλαγές"
       }
     },
     "conversation": {

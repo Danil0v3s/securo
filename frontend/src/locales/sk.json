@@ -2801,7 +2801,9 @@
         "create_recurring_transaction": "Pridať opakovanú transakciu",
         "update_recurring_transaction": "Upraviť opakovanú transakciu",
         "cancel_recurring_transaction": "Zrušiť opakovanú transakciu",
-        "create_goal": "Vytvoriť cieľ"
+        "create_goal": "Vytvoriť cieľ",
+        "link_transfer": "Prepojiť ako prevod",
+        "unlink_transfer": "Zrušiť prepojenie prevodu"
       },
       "summary": {
         "categorize": "{{count}} transakcií → {{category}}",
@@ -2817,7 +2819,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "Zastaviť budúce výskyty „{{description}}“ (história zostane)",
         "deleteRecurring": "Natrvalo vymazať „{{description}}“",
-        "createGoal": "„{{name}}“ — cieľová suma {{target}}, termín {{deadline}}"
+        "createGoal": "„{{name}}“ — cieľová suma {{target}}, termín {{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} a {{to}} budú opäť bežné transakcie"
       }
     },
     "conversation": {

@@ -2661,7 +2661,9 @@
         "create_recurring_transaction": "Ismétlődő tranzakció hozzáadása",
         "update_recurring_transaction": "Ismétlődő tranzakció frissítése",
         "cancel_recurring_transaction": "Ismétlődő tranzakció leállítása",
-        "create_goal": "Cél létrehozása"
+        "create_goal": "Cél létrehozása",
+        "link_transfer": "Összekapcsolás átvezetésként",
+        "unlink_transfer": "Átvezetés szétválasztása"
       },
       "summary": {
         "categorize": "{{count}} tranzakció → {{category}}",
@@ -2673,7 +2675,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "„{{description}}” jövőbeli előfordulásainak leállítása (az előzmények megmaradnak)",
         "deleteRecurring": "„{{description}}” végleges törlése",
-        "createGoal": "„{{name}}” — célösszeg: {{target}}, határidő: {{deadline}}"
+        "createGoal": "„{{name}}” — célösszeg: {{target}}, határidő: {{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} és {{to}} ismét normál tranzakció lesz"
       }
     },
     "conversation": {

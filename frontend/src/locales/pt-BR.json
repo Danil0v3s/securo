@@ -2649,7 +2649,9 @@
         "create_recurring_transaction": "Adicionar transação recorrente",
         "update_recurring_transaction": "Atualizar transação recorrente",
         "cancel_recurring_transaction": "Cancelar transação recorrente",
-        "create_goal": "Criar meta"
+        "create_goal": "Criar meta",
+        "link_transfer": "Vincular como transferência",
+        "unlink_transfer": "Desvincular transferência"
       },
       "summary": {
         "categorize": "{{count}} transação(ões) → {{category}}",
@@ -2661,7 +2663,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "Parar futuras ocorrências de “{{description}}” (histórico mantido)",
         "deleteRecurring": "Excluir permanentemente “{{description}}”",
-        "createGoal": "“{{name}}” — meta {{target}}, prazo {{deadline}}"
+        "createGoal": "“{{name}}” — meta {{target}}, prazo {{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} e {{to}} voltam a ser transações comuns"
       }
     },
     "conversation": {

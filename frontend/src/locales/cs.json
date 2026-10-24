@@ -2817,7 +2817,9 @@
         "create_recurring_transaction": "Přidat opakovanou transakci",
         "update_recurring_transaction": "Upravit opakovanou transakci",
         "cancel_recurring_transaction": "Zrušit opakovanou transakci",
-        "create_goal": "Vytvořit cíl"
+        "create_goal": "Vytvořit cíl",
+        "link_transfer": "Propojit jako převod",
+        "unlink_transfer": "Zrušit propojení převodu"
       },
       "summary": {
         "categorize": "{{count}} transakcí → {{category}}",
@@ -2833,7 +2835,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "Zastavit budoucí výskyty „{{description}}“ (historie zůstane)",
         "deleteRecurring": "Natrvalo smazat „{{description}}“",
-        "createGoal": "„{{name}}“ — cílová částka {{target}}, termín {{deadline}}"
+        "createGoal": "„{{name}}“ — cílová částka {{target}}, termín {{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} a {{to}} budou opět běžné transakce"
       }
     },
     "conversation": {

@@ -2661,7 +2661,9 @@
         "create_recurring_transaction": "Add recurring transaction",
         "update_recurring_transaction": "Update recurring transaction",
         "cancel_recurring_transaction": "Cancel recurring transaction",
-        "create_goal": "Create goal"
+        "create_goal": "Create goal",
+        "link_transfer": "Link as transfer",
+        "unlink_transfer": "Unlink transfer"
       },
       "summary": {
         "categorize": "{{count}} transaction(s) → {{category}}",
@@ -2673,7 +2675,9 @@
         "updateRecurring": "{{description}} → {{changes}}",
         "deactivateRecurring": "Stop future occurrences of “{{description}}” (history kept)",
         "deleteRecurring": "Permanently delete “{{description}}”",
-        "createGoal": "“{{name}}” — target {{target}}, deadline {{deadline}}"
+        "createGoal": "“{{name}}” — target {{target}}, deadline {{deadline}}",
+        "linkTransfer": "{{from}} → {{to}}",
+        "unlinkTransfer": "{{from}} and {{to}} go back to regular transactions"
       }
     },
     "conversation": {

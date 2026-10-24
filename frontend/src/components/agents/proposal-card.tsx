@@ -14,7 +14,7 @@ import {
   transactions,
 } from '@/lib/api'
 
-import type { ProposalKind, ProposalData } from '@/lib/agent-proposals'
+import type { ProposalKind, ProposalData, TransferLeg } from '@/lib/agent-proposals'
 
 interface Props {
   toolCallId: string
@@ -230,9 +230,27 @@ function renderSummary(kind: ProposalKind, d: ProposalData, t: ReturnType<typeof
         target: fmt(p.target_amount, p.currency),
         deadline: p.deadline ? String(p.deadline) : '—',
       })
+    case 'link_transfer':
+    case 'unlink_transfer': {
+      const legs = d.legs || []
+      // Debit first: money leaves that account and lands in the credit one.
+      const from = legs.find((l) => l.type === 'debit') ?? legs[0]
+      const to = legs.find((l) => l !== from)
+      return t(
+        kind === 'link_transfer' ? 'agents.proposal.summary.linkTransfer' : 'agents.proposal.summary.unlinkTransfer',
+        { from: legLabel(from), to: legLabel(to) },
+      )
+    }
     default:
       return ''
   }
+}
+
+function legLabel(leg: TransferLeg | undefined): string {
+  if (!leg) return '?'
+  const parts = [String(leg.account_name ?? leg.description ?? '?'), fmt(leg.amount, leg.currency)]
+  if (leg.date) parts.push(`(${leg.date})`)
+  return parts.join(' ')
 }
 
 function fmt(amount: unknown, currency: unknown): string {
@@ -408,6 +426,15 @@ async function applyProposal(data: ProposalData): Promise<string | void> {
         color: (p.color as string) || undefined,
       } as Parameters<typeof goals.create>[0])
       return g.id
+    }
+    case 'link_transfer': {
+      const res = await transactions.linkTransfer(data.transaction_ids || [])
+      return res.transfer_pair_id
+    }
+    case 'unlink_transfer': {
+      const pairId = String(data.transfer_pair_id)
+      await transactions.unlinkTransfer(pairId)
+      return pairId
     }
   }
 }
