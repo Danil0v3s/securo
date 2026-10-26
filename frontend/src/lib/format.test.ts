@@ -180,6 +180,8 @@ describe('formatSignedAmount', () => {
   it('takes the sign from the type, not from a stored negative amount', () => {
     expect(formatSignedAmount(-100, 'debit', 'USD', 'en-US')).toBe('-$100.00')
     expect(formatSignedAmount(-100, 'credit', 'USD', 'en-US')).toBe('+$100.00')
+    // any type other than debit counts as positive, like the rule engine
+    expect(formatSignedAmount(100, 'other', 'USD', 'en-US')).toBe('+$100.00')
   })
 
   it('leaves amounts that round to zero unsigned', () => {

@@ -210,7 +210,8 @@ export function formatSignedAmount(
   const formatted = formatCurrency(magnitude, currency, locale)
   const factor = 10 ** (currencyFormatter(currency, locale).resolvedOptions().maximumFractionDigits ?? 2)
   if (Math.round(magnitude * factor) === 0) return formatted
-  return `${type === 'credit' ? '+' : '-'}${formatted}`
+  // Same rule as the backend rule engine: only a debit is negative.
+  return `${type === 'debit' ? '-' : '+'}${formatted}`
 }
 
 /**
