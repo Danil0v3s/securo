@@ -344,7 +344,9 @@ async def _ledger_rows(session, account_id):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("throttled_on", ["transactions", "details"])
+@pytest.mark.parametrize(
+    "throttled_on", ["transactions", "details", "details_after_reauth"]
+)
 async def test_throttled_account_is_left_out_of_phantom_cleanup(
     session: AsyncSession, test_user, test_workspace, throttled_on
 ):
@@ -362,7 +364,11 @@ async def test_throttled_account_is_left_out_of_phantom_cleanup(
         provider = _mock_provider_two_accounts(rate_limit_transactions_for="rl-acc-a")
     else:
         provider = _mock_provider_two_accounts(rate_limit_account="rl-acc-a")
-        provider.rate_limited_account_ids = {"rl-acc-a"}
+        # After a reauthorisation the provider reports the throttled account
+        # under its new session uid, while the stored row keeps the old one.
+        provider.rate_limited_account_ids = (
+            {"rl-acc-a"} if throttled_on == "details" else {"rl-acc-a-new-uid"}
+        )
     with _sync_patches(provider):
         _, _, outcome = await sync_connection(
             session, conn.id, test_workspace.id, test_user.id

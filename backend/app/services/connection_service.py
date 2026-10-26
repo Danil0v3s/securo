@@ -2870,7 +2870,11 @@ async def sync_connection(
         # A throttled account has no live id set this run (its transactions
         # were never read, or the account itself was skipped), so the cleanup
         # would fall back to the heuristic that can delete a real unpaired row.
-        # Leave it alone until a run reads it, as for a cut-short fetch.
+        # Leave it alone until a run reads it, as for a cut-short fetch. An
+        # account skipped on its details or balance is matched by its stored
+        # row, whose external_id can still be the uid of an earlier session
+        # (a reauthorisation re-keys it only when the account comes through),
+        # so every stored row the provider did not return this run counts.
         throttled_account_ids: set[uuid.UUID] = set()
         if rate_limited_accounts:
             throttled_account_ids = set(
@@ -2878,7 +2882,10 @@ async def sync_connection(
                     await session.execute(
                         select(Account.id).where(
                             Account.connection_id == connection.id,
-                            Account.external_id.in_(rate_limited_accounts),
+                            or_(
+                                Account.external_id.in_(rate_limited_accounts),
+                                Account.external_id.not_in(incoming_external_ids),
+                            ),
                         )
                     )
                 ).scalars()
