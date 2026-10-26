@@ -1,9 +1,34 @@
+import { useBranding } from '@/hooks/use-branding'
+
+// The app mark used by the shell (sidebar, mobile header, auth screens,
+// agents chat). White label (issue #1045): when the deployment sets
+// BRAND_LOGO_URL, the instance's own mark is shown instead of the built-in
+// shell; otherwise the built-in shell renders, so an unbranded deployment
+// looks exactly as before.
+
 interface ShellLogoProps {
   size?: number
   className?: string
 }
 
 export function ShellLogo({ size = 24, className }: ShellLogoProps) {
+  const { logoUrl } = useBranding()
+
+  if (logoUrl) {
+    // Decorative by design, like the svg below: the app name sits next to
+    // this mark at every call site.
+    return (
+      <img
+        src={logoUrl}
+        alt=""
+        width={size}
+        height={size}
+        className={className}
+        draggable={false}
+      />
+    )
+  }
+
   return (
     <svg
       width={size}

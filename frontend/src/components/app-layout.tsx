@@ -53,6 +53,7 @@ import {
   Fingerprint,
 } from 'lucide-react'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
+import { useBranding } from '@/hooks/use-branding'
 import { ChangePasswordDialog } from '@/components/change-password-dialog'
 import { BackupDialog } from '@/components/backup-dialog'
 import { TwoFactorSetup } from '@/components/two-factor-setup'
@@ -198,6 +199,10 @@ export function AppLayout() {
     : allAccounts
   const totalBalance = sumAccountsTotal(visibleAccounts)
   const versionA11yLabel = t('app.versionAriaLabel', { version: APP_VERSION })
+  // White label (issue #1045): a deployment can rename the instance via
+  // APP_NAME; the locale value stays the fallback when it is not set.
+  const instanceName = useBranding().appName
+  const appName = instanceName ?? t('app.name')
 
   return (
     <div className="min-h-screen bg-background">
@@ -213,12 +218,12 @@ export function AppLayout() {
         <Link
           to="/"
           className="flex items-center gap-2 -mx-1 px-1 py-1 rounded-md hover:bg-sidebar-accent transition-colors"
-          aria-label={t('app.name')}
+          aria-label={appName}
           title={t('nav.dashboard')}
         >
           <ShellLogo size={22} className="text-primary shrink-0" />
           <span className="font-bold text-sidebar-foreground">
-            {t('app.name')}
+            {appName}
           </span>
         </Link>
         <div className="ml-auto flex items-center gap-2">
@@ -306,7 +311,7 @@ export function AppLayout() {
               to="/"
               className="flex items-center gap-2.5 -mx-1 px-1 py-1 rounded-md hover:bg-sidebar-accent transition-colors"
               onClick={() => setSidebarOpen(false)}
-              aria-label={t('app.name')}
+              aria-label={appName}
               title={t('nav.dashboard')}
             >
               <ShellLogo size={24} className="text-primary shrink-0" />
@@ -314,7 +319,7 @@ export function AppLayout() {
                 'font-bold text-lg text-sidebar-foreground tracking-tight',
                 desktopSidebarCollapsed && 'lg:hidden',
               )}>
-                {t('app.name')}
+                {appName}
               </span>
             </Link>
             <div className={cn(

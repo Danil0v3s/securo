@@ -9,6 +9,7 @@ import { WorkspaceProvider } from '@/contexts/workspace-provider'
 import { CollectionFilterProvider } from '@/contexts/collection-filter-provider'
 import { SidebarStateProvider } from '@/contexts/sidebar-state-provider'
 import { useCrossTabRefresh } from '@/hooks/use-cross-tab-refresh'
+import { useBrandingDocument } from '@/hooks/use-branding-document'
 import { ProtectedRoute } from '@/components/protected-route'
 import { AdminRoute } from '@/components/admin-route'
 import { AgentsRoute } from '@/components/agents-route'
@@ -75,11 +76,22 @@ function CrossTabRefresh() {
   return null
 }
 
+/**
+ * Renders nothing; applies the instance brand to the browser tab (title and
+ * favicons) once the /api/info cache has the deployment's branding
+ * (issue #1045).
+ */
+function BrandingDocument() {
+  useBrandingDocument()
+  return null
+}
+
 function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <CrossTabRefresh />
+        <BrandingDocument />
         <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>

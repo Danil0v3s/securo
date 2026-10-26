@@ -1750,8 +1750,14 @@ export const search = {
 }
 
 // App-level feature flags (whether optional modules like agents are mounted)
+// and the instance brand for white label deployments (issue #1045).
 export interface AppInfo {
   features: { agents: boolean; tesouro_direto?: boolean }
+  branding?: {
+    name: string | null
+    logo_url: string | null
+    favicon_url: string | null
+  }
 }
 
 export const info = {

@@ -182,6 +182,18 @@ OPENEXCHANGERATES_APP_ID=your-app-id
 
 Rates are fetched on-demand when foreign-currency transactions are created. Without a key, cross-currency amounts default to a 1:1 fallback rate with a visual warning.
 
+## Branding (Optional)
+
+Self-hosted instances can show their own identity instead of the built-in one: set `APP_NAME` to rename the app in the sidebar, the login screen and the browser tab, and point `BRAND_LOGO_URL` and `BRAND_FAVICON_URL` at a logo and a favicon the deployment serves (anything the browser can load, including a file on your own domain or a data URI).
+
+```
+APP_NAME=My Company
+BRAND_LOGO_URL=/branding/logo.png
+BRAND_FAVICON_URL=/branding/favicon.png
+```
+
+Leave any of them unset and that part of the built-in brand is kept, so an existing installation looks exactly the same until it is configured.
+
 ## Timezone
 
 Balances, budgets, due dates and recurring transactions turn over at midnight in the application timezone. Set it once in Admin Settings → Date and time; a workspace that keeps its books somewhere else can pick its own timezone in Workspace settings. Without a saved value the application follows `TZ` from the environment, then the host timezone, then UTC, so an existing installation keeps behaving as before until someone changes it.

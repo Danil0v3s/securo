@@ -19,6 +19,11 @@ x-backend-env: &backend-env
   WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-Securo}
   WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-}
   WEBAUTHN_ORIGIN: ${WEBAUTHN_ORIGIN:-}
+  # White label: instance name and mark. Leave unset for the built-in
+  # brand (README, "Branding" section).
+  APP_NAME: ${APP_NAME:-Securo}
+  BRAND_LOGO_URL: ${BRAND_LOGO_URL:-}
+  BRAND_FAVICON_URL: ${BRAND_FAVICON_URL:-}
   PLUGGY_CLIENT_ID: ${PLUGGY_CLIENT_ID:-}
   PLUGGY_CLIENT_SECRET: ${PLUGGY_CLIENT_SECRET:-}
   PLUGGY_OAUTH_REDIRECT_URI: ${PLUGGY_OAUTH_REDIRECT_URI:-}

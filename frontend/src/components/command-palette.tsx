@@ -3,6 +3,7 @@ import { Command } from 'cmdk'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useBranding } from '@/hooks/use-branding'
 import { useDisplayLocale } from '@/hooks/use-display-locale'
 import { useWorkspace } from '@/contexts/workspace-context'
 import type { ModuleId } from '@/lib/modules'
@@ -265,6 +266,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { hasModule } = useWorkspace()
+  const instanceName = useBranding().appName ?? t('app.name')
   const [query, setQuery] = useState('')
   const [debounced, setDebounced] = useState('')
   const recents = useSyncExternalStore(subscribeRecents, getRecentSnapshot, getRecentSnapshot)
@@ -677,7 +679,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <div className="flex items-center justify-between gap-4 border-t border-border/60 bg-muted/30 px-4 py-2">
               <div className="flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
                 <CircleDollarSign size={11} className="text-primary" />
-                <span className="font-semibold tracking-tight text-foreground/90">Securo</span>
+                <span className="font-semibold tracking-tight text-foreground/90">{instanceName}</span>
                 <span className="text-muted-foreground/50">/</span>
                 <span>{t('cmdk.footer.tagline')}</span>
               </div>

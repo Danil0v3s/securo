@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { ShellLogo } from '@/components/shell-logo'
+import { useBranding } from '@/hooks/use-branding'
 
 // Left-hand brand panel for the auth/onboarding screens. A deep indigo→violet
 // field with a slow purple aurora drifting behind an oversized, translucent
@@ -7,6 +8,8 @@ import { ShellLogo } from '@/components/shell-logo'
 // the full width and carries its own compact header.
 export function AuthBrandPanel() {
   const { t } = useTranslation()
+  // White label: the instance name, falling back to the locale value.
+  const instanceName = useBranding().appName ?? t('app.name')
 
   return (
     <div
@@ -47,7 +50,7 @@ export function AuthBrandPanel() {
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
           <ShellLogo size={20} className="text-white" />
         </div>
-        <span className="text-lg font-semibold tracking-tight">Securo</span>
+        <span className="text-lg font-semibold tracking-tight">{instanceName}</span>
       </div>
 
       {/* Tagline */}
