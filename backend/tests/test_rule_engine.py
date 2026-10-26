@@ -395,6 +395,18 @@ def test_amount_not_equals_signed():
     assert evaluate_conditions("and", conditions, make_tx(type="debit", amount=Decimal("25.50"))) is False
 
 
+def test_amount_sign_comes_from_type_even_when_stored_negative():
+    # A row saved with an already-negative amount must not flip the sign twice.
+    expense = make_tx(type="debit", amount=Decimal("-100"))
+    income = make_tx(type="credit", amount=Decimal("-100"))
+    gt_zero = [{"field": "amount", "op": "gt", "value": 0}]
+    assert evaluate_conditions("and", gt_zero, expense) is False
+    assert evaluate_conditions("and", gt_zero, income) is True
+    equals = [{"field": "amount", "op": "equals", "value": "-100"}]
+    assert evaluate_conditions("and", equals, expense) is True
+    assert evaluate_conditions("and", equals, income) is False
+
+
 def test_date_gt():
     conditions = [{"field": "date", "op": "gt", "value": "2026-02-09"}]
     tx = make_tx(date=date(2026, 2, 10))

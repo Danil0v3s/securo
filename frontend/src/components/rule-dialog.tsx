@@ -4,7 +4,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { getAccountName, sortAccountsByDisplayName } from '@/lib/account-utils'
 import { isInvalidDescriptionAction, parseRulePriority, previewableActions } from '@/lib/rule-form-utils'
 import { rules as rulesApi } from '@/lib/api'
-import { formatCurrency } from '@/lib/format'
+import { formatSignedAmount } from '@/lib/format'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { Input } from '@/components/ui/input'
@@ -365,7 +365,7 @@ function RulePreviewPanel({
                           'whitespace-nowrap py-1.5 pr-2 text-right tabular-nums',
                           item.will_change && (item.type === 'credit' ? 'text-emerald-600' : 'text-rose-500'),
                         )}>
-                          {mask(`${item.type === 'credit' ? '+' : '-'}${formatCurrency(Math.abs(item.amount), item.currency, locale)}`)}
+                          {mask(formatSignedAmount(item.amount, item.type, item.currency, locale))}
                         </td>
                         <td className="py-1.5">
                           {item.will_change ? (

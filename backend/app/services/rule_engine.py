@@ -46,9 +46,12 @@ def _signed_amount(tx: "Transaction", raw) -> Decimal:
 
     Amounts are stored positive with the direction in `type`, so an unsigned
     comparison sees every transaction as positive. The sign is what lets
-    `amount > 0` select income and `amount < 0` expenses.
+    `amount > 0` select income and `amount < 0` expenses. The magnitude is
+    taken first because a row saved with a negative amount (the manual API
+    does not reject one) must follow the same contract: the sign comes from
+    `type` alone.
     """
-    amount = _to_decimal(raw)
+    amount = abs(_to_decimal(raw))
     if getattr(tx, "type", None) == "debit":
         amount = -amount
     return amount
