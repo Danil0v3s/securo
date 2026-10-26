@@ -982,6 +982,21 @@ async def get_account_summary(
             and_(override > cycle["prev"], override <= cycle["this"]),
         )
 
+    def _before_window():
+        """Rows that belong to an earlier cycle than this one, under the
+        same rule as `_membership`: without a cycle, anything bucketed
+        before the window; with one, rows without an override bucketed
+        before the window plus overrides on or before the previous bill's
+        due date. Keeps older debt and this cycle's rows disjoint, so a
+        charge moved onto the previous bill counts as older debt."""
+        if cycle is None or cycle["degenerate"]:
+            return bucket_date < date_from
+        override = Transaction.effective_bill_date
+        return or_(
+            and_(override.is_(None), bucket_date < date_from),
+            override <= cycle["prev"],
+        )
+
     # Bill-driven filter (issue #92): when the caller passes bill_id, include
     #   (a) txs linked to this bill via Pluggy's billId mapping, AND
     #   (b) txs with NO bill_id (manual entries, OFX/CSV imports, recurring
@@ -1079,7 +1094,7 @@ async def get_account_summary(
                 )
             ), 0)).where(
                 Transaction.account_id == account_id,
-                bucket_date < date_from,
+                _before_window(),
                 # Rows linked to the selected bill belong to it whatever
                 # their date (see `_scope`), so they are not older debt.
                 *([] if bill_id is None else [or_(

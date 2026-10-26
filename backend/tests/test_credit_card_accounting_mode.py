@@ -2289,3 +2289,42 @@ class TestOverrideRangeRule:
             else:
                 assert not listed, f"leaked into the {name} bill list"
                 assert summary["monthly_expenses"] == 0.0, name
+
+
+@pytest.mark.asyncio
+async def test_charge_moved_to_previous_bill_counts_as_prior_debt(
+    session, test_user, test_workspace, cc_account_due_before_close
+):
+    """A charge whose override moves it onto the previous bill must count
+    as older debt for that bill's payment inside this window. Otherwise the
+    payment settles less older debt than it really does, and the excess is
+    netted against this cycle's own charges."""
+    account = cc_account_due_before_close
+    # Aug bill (window 06-24 to 07-23, due 08-18): 200 in its window plus a
+    # 100 charge from the Sep window overridden onto it.
+    await _make_tx(session, test_user.id, account.id, date(2025, 7, 1), Decimal("200.00"))
+    moved = await _make_tx(
+        session, test_user.id, account.id, date(2025, 7, 25), Decimal("100.00"),
+    )
+    moved.effective_bill_date = date(2025, 8, 18)
+    # The Aug bill paid in full on its due date, inside the Sep window.
+    payment = await _make_tx(
+        session, test_user.id, account.id, date(2025, 8, 18), Decimal("300.00"),
+        tx_type="credit",
+    )
+    payment.transfer_pair_id = uuid.uuid4()
+    # The Sep cycle's own charges.
+    await _make_tx(session, test_user.id, account.id, date(2025, 8, 1), Decimal("50.00"))
+    await session.commit()
+
+    aug = await account_service.get_account_summary(
+        session, account.id, test_workspace.id,
+        date_from=date(2025, 6, 24), date_to=date(2025, 7, 23),
+    )
+    sep = await account_service.get_account_summary(
+        session, account.id, test_workspace.id,
+        date_from=date(2025, 7, 24), date_to=date(2025, 8, 23),
+    )
+    assert aug is not None and sep is not None
+    assert aug["monthly_expenses"] == pytest.approx(300.0)
+    assert sep["monthly_expenses"] == pytest.approx(50.0)
