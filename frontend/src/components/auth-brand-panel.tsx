@@ -32,7 +32,9 @@ export function AuthBrandPanel() {
         className="pointer-events-none absolute -right-28 -bottom-24 text-white/[0.06]"
         style={{ transform: 'rotate(-8deg)' }}
       >
-        <ShellLogo size={640} />
+        {/* A custom logo image ignores the translucent text color above, so
+            it carries the same low opacity itself. */}
+        <ShellLogo size={640} imageClassName="opacity-[0.06]" />
       </div>
 
       {/* Depth: gentle vignette toward the edges */}

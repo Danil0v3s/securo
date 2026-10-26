@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
-import { QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { useBranding } from '@/hooks/use-branding'
 import { createTestQueryClient } from '@/test/utils'
@@ -9,16 +9,23 @@ import { createTestQueryClient } from '@/test/utils'
 const info = vi.hoisted(() => ({ get: vi.fn() }))
 vi.mock('@/lib/api', () => ({ info }))
 
+let queryClient: QueryClient
+
 function wrapper({ children }: { children: ReactNode }) {
-  return (
-    <QueryClientProvider client={createTestQueryClient()}>
-      {children}
-    </QueryClientProvider>
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+}
+
+// Asserting the fallback before the request settles would pass even with a
+// broken mapping, so each fallback case waits for the query to finish.
+async function settled(status: 'success' | 'error') {
+  await waitFor(() =>
+    expect(queryClient.getQueryState(['app-info'])?.status).toBe(status),
   )
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  queryClient = createTestQueryClient()
 })
 
 describe('useBranding', () => {
@@ -48,7 +55,7 @@ describe('useBranding', () => {
 
     const { result } = renderHook(() => useBranding(), { wrapper })
 
-    await waitFor(() => expect(info.get).toHaveBeenCalled())
+    await settled('success')
     expect(result.current).toEqual({
       appName: null,
       logoUrl: null,
@@ -61,7 +68,7 @@ describe('useBranding', () => {
 
     const { result } = renderHook(() => useBranding(), { wrapper })
 
-    await waitFor(() => expect(info.get).toHaveBeenCalled())
+    await settled('error')
     expect(result.current).toEqual({
       appName: null,
       logoUrl: null,

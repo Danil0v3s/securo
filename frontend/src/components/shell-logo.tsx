@@ -1,4 +1,5 @@
 import { useBranding } from '@/hooks/use-branding'
+import { cn } from '@/lib/utils'
 
 // The app mark used by the shell (sidebar, mobile header, auth screens,
 // agents chat). White label (issue #1045): when the deployment sets
@@ -9,9 +10,15 @@ import { useBranding } from '@/hooks/use-branding'
 interface ShellLogoProps {
   size?: number
   className?: string
+  /**
+   * Classes for a custom logo image only. The built-in svg takes its tint
+   * from `currentColor`, so a parent's translucent text color dims it; an
+   * image ignores that and needs its own opacity (the auth watermark).
+   */
+  imageClassName?: string
 }
 
-export function ShellLogo({ size = 24, className }: ShellLogoProps) {
+export function ShellLogo({ size = 24, className, imageClassName }: ShellLogoProps) {
   const { logoUrl } = useBranding()
 
   if (logoUrl) {
@@ -23,7 +30,7 @@ export function ShellLogo({ size = 24, className }: ShellLogoProps) {
         alt=""
         width={size}
         height={size}
-        className={className}
+        className={cn(className, imageClassName)}
         draggable={false}
       />
     )

@@ -26,4 +26,16 @@ describe('AuthBrandPanel white label (issue #1045)', () => {
     renderWithProviders(<AuthBrandPanel />)
     expect(screen.getByText('Household Ledger')).toBeInTheDocument()
   })
+
+  it('dims a custom logo in the oversized watermark but not in the wordmark', () => {
+    branding.current = { appName: 'Household Ledger', logoUrl: '/branding/logo.png', faviconUrl: null }
+    const { container } = renderWithProviders(<AuthBrandPanel />)
+
+    const images = Array.from(container.querySelectorAll('img'))
+    const watermark = images.find((img) => img.getAttribute('width') === '640')
+    const wordmark = images.find((img) => img.getAttribute('width') === '20')
+    expect(watermark).toHaveClass('opacity-[0.06]')
+    expect(wordmark).toBeDefined()
+    expect(wordmark?.className ?? '').not.toMatch(/opacity/)
+  })
 })
