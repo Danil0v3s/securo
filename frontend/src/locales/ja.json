@@ -1522,6 +1522,7 @@
     "addCondition": "条件を追加",
     "addGroup": "グループを追加",
     "addGroupHint": "グループは内部の条件をANDまたはORで結合します",
+    "amountSignHint": "金額には符号があります。収入は正、支出は負です。",
     "group": "グループ",
     "removeGroup": "グループを削除",
     "blankConditionValue": "すべての条件に値が必要です。空欄のままだとすべての取引に一致してしまいます。",

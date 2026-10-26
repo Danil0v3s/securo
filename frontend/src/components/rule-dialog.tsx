@@ -363,9 +363,9 @@ function RulePreviewPanel({
                         </td>
                         <td className={cn(
                           'whitespace-nowrap py-1.5 pr-2 text-right tabular-nums',
-                          item.will_change && item.type === 'credit' && 'text-emerald-600',
+                          item.will_change && (item.type === 'credit' ? 'text-emerald-600' : 'text-rose-500'),
                         )}>
-                          {mask(formatCurrency(Math.abs(item.amount), item.currency, locale))}
+                          {mask(`${item.type === 'credit' ? '+' : '-'}${formatCurrency(Math.abs(item.amount), item.currency, locale)}`)}
                         </td>
                         <td className="py-1.5">
                           {item.will_change ? (
@@ -463,6 +463,13 @@ export function RuleDialog({
     initialData?.overwriteExistingCategories ?? false
   )
   const [previewOpen, setPreviewOpen] = useState(false)
+
+  // Signed amounts are not obvious from a bare number box, so say it once,
+  // right where the threshold is typed: income positive, expenses negative.
+  const hasAmountCondition = useMemo(
+    () => flattenConditions(conditions).some(c => c.field === 'amount'),
+    [conditions],
+  )
 
   function updateCondition(i: number, field: keyof RuleCondition, val: string | number) {
     setConditions(prev => prev.map((node, idx) => (
@@ -669,6 +676,9 @@ export function RuleDialog({
                   <Plus size={12} /> {t('rules.addGroup')}
                 </button>
               </div>
+              {hasAmountCondition && (
+                <p className="text-xs text-muted-foreground">{t('rules.amountSignHint')}</p>
+              )}
             </div>
           </div>
 

@@ -1527,6 +1527,7 @@
     "addCondition": "Adicionar condição",
     "addGroup": "Adicionar grupo",
     "addGroupHint": "Um grupo junta as suas próprias condições com E ou OU",
+    "amountSignHint": "Os valores têm sinal: rendimentos são positivos, despesas são negativas.",
     "group": "Grupo",
     "removeGroup": "Remover grupo",
     "blankConditionValue": "Todas as condições precisam de um valor. Uma condição em branco corresponderia a todas as transações.",

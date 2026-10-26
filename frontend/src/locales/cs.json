@@ -1631,6 +1631,7 @@
     "addCondition": "Přidat podmínku",
     "addGroup": "Přidat skupinu",
     "addGroupHint": "Skupina spojuje své podmínky pomocí A nebo NEBO",
+    "amountSignHint": "Částky mají znaménko: příjmy jsou kladné, výdaje záporné.",
     "group": "Skupina",
     "removeGroup": "Odebrat skupinu",
     "blankConditionValue": "Každá podmínka potřebuje hodnotu. Prázdná by odpovídala každé transakci.",

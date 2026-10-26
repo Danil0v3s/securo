@@ -1594,6 +1594,7 @@
     "addCondition": "Dodaj warunek",
     "addGroup": "Dodaj grupę",
     "addGroupHint": "Grupa łączy własne warunki operatorem I lub LUB",
+    "amountSignHint": "Kwoty mają znak: przychody są dodatnie, wydatki ujemne.",
     "group": "Grupa",
     "removeGroup": "Usuń grupę",
     "blankConditionValue": "Każdy warunek wymaga wartości. Pusty warunek pasowałby do wszystkich transakcji.",
