@@ -34,7 +34,12 @@ from app.services._query_filters import (
     is_not_ignored,
     reporting_date_col,
 )
-from app.services.credit_card_service import apply_effective_date, compute_available_credit, get_cycle_dates
+from app.services.credit_card_service import (
+    apply_effective_date,
+    cc_cycle_bill_due_dates,
+    compute_available_credit,
+    get_cycle_dates,
+)
 from app.services.fx_rate_service import _resolve_rate
 from app.models.category import Category
 
@@ -880,6 +885,10 @@ async def get_account_summary(
         return None
 
     today = app_today()
+    # Captured before the defaults below fill in None dates, so the
+    # bill-based window rule only applies to windows the caller actually
+    # sent (issue #563).
+    explicit_window = date_from is not None and date_to is not None
     if not date_from:
         date_from = today.replace(day=1)
     if not date_to:
@@ -934,6 +943,44 @@ async def get_account_summary(
     # a tx belongs to via `effective_bill_date`. We honor that first so the
     # totals card and bar chart agree with the transactions list (issue #92).
     bucket_date = func.coalesce(Transaction.effective_bill_date, Transaction.date)
+
+    # Bill-based membership for the plain (cycle-math) window: when the
+    # caller sent a window that is exactly one bill cycle of this credit
+    # card account, an overridden tx belongs to the bill whose
+    # (previous due date, due date] range contains the override, not to the
+    # purchase window that contains it (for due-before-close cards a due
+    # date sits in the NEXT cycle's window, issue #563).
+    cycle = None
+    if (
+        explicit_window
+        and bill_id is None
+        and not unbilled_only
+        and account.type == "credit_card"
+    ):
+        cycle = cc_cycle_bill_due_dates(
+            date_from, date_to,
+            account.statement_close_day, account.payment_due_day,
+        )
+
+    def _membership():
+        """Window predicate for these totals: the plain date window, or
+        the bill-based rule above when the window is one of this
+        account's cycles. The actuals cap (bucket_date <= today) and the
+        forecast condition stay on the queries, so a tx in one bill's
+        window can still not leak into another bill's totals."""
+        if cycle is None or cycle["degenerate"]:
+            return and_(bucket_date >= date_from, bucket_date <= date_to)
+        override = Transaction.effective_bill_date
+        return or_(
+            and_(
+                override.is_(None),
+                bucket_date >= date_from,
+                bucket_date <= date_to,
+            ),
+            # (previous due date, this due date]: each override date maps
+            # to exactly one bill.
+            and_(override > cycle["prev"], override <= cycle["this"]),
+        )
 
     # Bill-driven filter (issue #92): when the caller passes bill_id, include
     #   (a) txs linked to this bill via Pluggy's billId mapping, AND
@@ -997,7 +1044,11 @@ async def get_account_summary(
                     future_override,
                 ),
             )
-        return query.where(bucket_date >= date_from, bucket_date <= date_to)
+        # Plain cycle-math window: bill-based membership when the window is
+        # one of this credit card account's cycles (issue #563), plain date
+        # window otherwise (non-CC accounts, wider ranges, degenerate
+        # close/due pairs).
+        return query.where(_membership())
 
     # Which exclusions these totals answer to. A credit card's four summary
     # numbers are all bill-side — they describe what the bank put on the
