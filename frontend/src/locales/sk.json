@@ -1440,7 +1440,8 @@
     "suggestSpent": "Vynaložené za obdobie: {{amount}}",
     "suggestCreate": "Vytvoriť rozpočty",
     "suggestCreated": "Vytvorené {{count}} rozpočtov",
-    "suggestEmpty": "Vo vybranom období nie je história výdavkov."
+    "suggestEmpty": "Vo vybranom období nie je história výdavkov.",
+    "suggestError": "Návrhy sa nepodarilo načítať. Skúste to znova o chvíľu."
   },
   "goals": {
     "title": "Ciele",

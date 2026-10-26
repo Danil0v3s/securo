@@ -1374,7 +1374,8 @@
     "suggestSpent": "Besteed in de periode: {{amount}}",
     "suggestCreate": "Budgetten aanmaken",
     "suggestCreated": "{{count}} budgetten aangemaakt",
-    "suggestEmpty": "Geen uitgavenhistoriek in de geselecteerde periode."
+    "suggestEmpty": "Geen uitgavenhistoriek in de geselecteerde periode.",
+    "suggestError": "Suggesties konden niet worden geladen. Probeer het zo opnieuw."
   },
   "goals": {
     "title": "Doelen",

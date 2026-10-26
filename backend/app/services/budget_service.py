@@ -575,19 +575,23 @@ async def get_budget_suggestions(
         if net != 0:
             total_by_cat[str(cat_uuid)] = net
 
-    # Per-transaction rows, aggregated in Python: SQLite and Postgres do
-    # not share a portable month-truncation function.
-    monthly_result = await session.execute(
-        select(Transaction.category_id, report_date, net_expr).where(*window_filters)
+    # Net per category and day in SQL, rolled up to months in Python (SQLite
+    # and Postgres do not share a portable month-truncation function). The
+    # "has spending" check runs on the month total, so a debit and an equal
+    # refund later in the same month leave that month without data.
+    daily_result = await session.execute(
+        select(Transaction.category_id, report_date, func.sum(net_expr))
+        .where(*window_filters)
+        .group_by(Transaction.category_id, report_date)
     )
     monthly_net: dict[tuple[str, date], Decimal] = {}
-    for cat_uuid, d, net in monthly_result.all():
-        key = (str(cat_uuid), d)
+    for cat_uuid, d, net in daily_result.all():
+        key = (str(cat_uuid), d.replace(day=1))
         monthly_net[key] = monthly_net.get(key, Decimal("0")) + (net or Decimal("0"))
     months_with_data: dict[str, set] = {}
-    for (cat_id, d), net in monthly_net.items():
+    for (cat_id, month_start), net in monthly_net.items():
         if net > 0:
-            months_with_data.setdefault(cat_id, set()).add(d.replace(day=1))
+            months_with_data.setdefault(cat_id, set()).add(month_start)
 
     own_offset = await owner_split_offset_by_category(
         session,

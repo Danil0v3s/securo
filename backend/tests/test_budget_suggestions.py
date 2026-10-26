@@ -92,6 +92,28 @@ def test_add_months_wraps_years():
 
 
 @pytest.mark.asyncio
+async def test_months_with_data_nets_the_whole_month(
+    session: AsyncSession, test_user, test_workspace, test_categories
+):
+    """A debit and an equal refund in the same month leave no data for it."""
+    account = await _make_account(session, test_user, "SugAccMonthNet")
+    cat_food = test_categories[0]
+    session.add_all([
+        _txn(test_user, account, cat_food, 100, date(2025, 4, 1)),
+        _txn(test_user, account, cat_food, 100, date(2025, 4, 5), kind="credit"),
+        _txn(test_user, account, cat_food, 300, date(2025, 5, 8)),
+    ])
+    await session.commit()
+
+    resp = await _suggest(session, test_user, test_workspace, date(2025, 6, 1), months=3)
+
+    food = _by_cat(resp, cat_food.id)
+    assert len(food) == 1
+    assert food[0].total_spent == Decimal("300")
+    assert food[0].months_with_data == 1
+
+
+@pytest.mark.asyncio
 async def test_suggestions_average_over_window(
     session: AsyncSession, test_user, test_workspace, test_categories
 ):

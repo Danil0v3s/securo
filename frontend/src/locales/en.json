@@ -1372,7 +1372,8 @@
     "suggestSpent": "Spent {{amount}} in the period",
     "suggestCreate": "Create budgets",
     "suggestCreated": "Created {{count}} budgets",
-    "suggestEmpty": "No spending history in the selected period to suggest from."
+    "suggestEmpty": "No spending history in the selected period to suggest from.",
+    "suggestError": "Could not load suggestions. Try again in a moment."
   },
   "goals": {
     "title": "Goals",

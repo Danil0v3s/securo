@@ -1376,7 +1376,8 @@
     "suggestSpent": "Gasto de {{amount}} no período",
     "suggestCreate": "Criar orçamentos",
     "suggestCreated": "{{count}} orçamentos criados",
-    "suggestEmpty": "Sem histórico de gastos no período selecionado para sugerir."
+    "suggestEmpty": "Sem histórico de gastos no período selecionado para sugerir.",
+    "suggestError": "Não foi possível carregar as sugestões. Tente novamente dentro de momentos."
   },
   "goals": {
     "title": "Objetivos",

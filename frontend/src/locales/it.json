@@ -1376,7 +1376,8 @@
     "suggestSpent": "Speso {{amount}} nel periodo",
     "suggestCreate": "Crea budget",
     "suggestCreated": "Creati {{count}} budget",
-    "suggestEmpty": "Nessuna cronologia di spesa nel periodo selezionato."
+    "suggestEmpty": "Nessuna cronologia di spesa nel periodo selezionato.",
+    "suggestError": "Impossibile caricare i suggerimenti. Riprova tra poco."
   },
   "goals": {
     "title": "Obiettivi",

@@ -1425,7 +1425,8 @@
     "suggestSpent": "Wydatki w okresie: {{amount}}",
     "suggestCreate": "Utwórz budżety",
     "suggestCreated": "Utworzono {{count}} budżetów",
-    "suggestEmpty": "Brak historii wydatków w wybranym okresie."
+    "suggestEmpty": "Brak historii wydatków w wybranym okresie.",
+    "suggestError": "Nie udało się wczytać sugestii. Spróbuj ponownie za chwilę."
   },
   "goals": {
     "title": "Cele",

@@ -96,7 +96,7 @@ export default function BudgetsPage() {
     queryFn: groupsApi.list,
   })
 
-  const { data: suggestionData, isPending: suggestionsPending } = useQuery({
+  const { data: suggestionData, isPending: suggestionsPending, isError: suggestionsError } = useQuery({
     queryKey: ['budgets', 'suggestions', monthParam, suggestMonths],
     queryFn: () => budgetsApi.suggestions(monthParam, suggestMonths),
     enabled: suggestOpen,
@@ -415,6 +415,8 @@ export default function BudgetsPage() {
             </p>
             {suggestionsPending ? (
               <p className="text-sm text-muted-foreground text-center py-8">{t('common.loading')}</p>
+            ) : suggestionsError ? (
+              <p role="alert" className="text-sm text-destructive text-center py-8">{t('budgets.suggestError')}</p>
             ) : suggestable.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">{t('budgets.suggestEmpty')}</p>
             ) : (

@@ -1373,7 +1373,8 @@
     "suggestSpent": "Ausgegeben im Zeitraum: {{amount}}",
     "suggestCreate": "Budgets erstellen",
     "suggestCreated": "{{count}} Budgets erstellt",
-    "suggestEmpty": "Keine Ausgaben im gewählten Zeitraum, aus denen vorgeschlagen werden kann."
+    "suggestEmpty": "Keine Ausgaben im gewählten Zeitraum, aus denen vorgeschlagen werden kann.",
+    "suggestError": "Vorschläge konnten nicht geladen werden. Versuche es gleich noch einmal."
   },
   "goals": {
     "title": "Ziele",

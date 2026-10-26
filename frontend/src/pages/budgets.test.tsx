@@ -145,6 +145,18 @@ describe('BudgetsPage suggestions', () => {
     expect(within(dialog).getByRole('button', { name: t('budgets.suggestCreate') })).toBeDisabled()
   })
 
+  it('shows an error, not the empty message, when suggestions fail to load', async () => {
+    api.budgets.suggestions.mockRejectedValue(new Error('server error'))
+    const { user } = renderWithProviders(<BudgetsPage />, { route: '/budgets' })
+
+    await user.click(await screen.findByRole('button', { name: t('budgets.suggest') }))
+    const dialog = await screen.findByRole('dialog')
+
+    expect(await within(dialog).findByText(t('budgets.suggestError'))).toBeInTheDocument()
+    expect(within(dialog).queryByText(t('budgets.suggestEmpty'))).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: t('budgets.suggestCreate') })).toBeDisabled()
+  })
+
   it('only sends checked rows with a positive amount', async () => {
     mockSuggestions([
       suggestion({}),
