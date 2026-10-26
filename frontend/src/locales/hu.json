@@ -1363,7 +1363,16 @@
     "confirmDeleteDescription": "A(z) „{{name}}” költségkerete véglegesen törlődik. A meglévő tranzakciókat ez nem érinti. Ez a művelet nem vonható vissza.",
     "confirmDeleteRecurringDescription": "A(z) „{{name}}” ismétlődő költségkerete véglegesen törlődik. Ez a beállítás a későbbi hónapokra sem vonatkozik majd. A meglévő tranzakciókat ez nem érinti. Ez a művelet nem vonható vissza.",
     "repeatEveryMonth": "Ismétlés minden hónapban",
-    "recurringLabel": "Ismétlődő"
+    "recurringLabel": "Ismétlődő",
+    "suggest": "Javaslat a múltból",
+    "suggestTitle": "Költségkeretek javaslása",
+    "suggestDescription": "Javasolt limitek az elmúlt {{months}} hónap átlagos havi kiadásaid alapján.",
+    "suggestPeriod": "Időtartam",
+    "suggestMonths": "hó",
+    "suggestSpent": "Kiadás az időszakban: {{amount}}",
+    "suggestCreate": "Költségkeretek létrehozása",
+    "suggestCreated": "{{count}} költségkeret létrehozva",
+    "suggestEmpty": "Nincs kiadási előzmény a kiválasztott időszakban."
   },
   "goals": {
     "title": "Célok",

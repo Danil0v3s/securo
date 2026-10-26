@@ -1367,7 +1367,16 @@
     "confirmDeleteDescription": "Le budget pour « {{name}} » sera définitivement supprimé. Les transactions existantes ne sont pas affectées. Cette action est irréversible.",
     "confirmDeleteRecurringDescription": "Le budget récurrent pour « {{name}} » sera définitivement supprimé. Cette définition ne s'appliquera plus aux mois suivants. Les transactions existantes ne sont pas affectées. Cette action est irréversible.",
     "repeatEveryMonth": "Répéter chaque mois",
-    "recurringLabel": "Récurrent"
+    "recurringLabel": "Récurrent",
+    "suggest": "Suggérer depuis l'historique",
+    "suggestTitle": "Suggérer des budgets",
+    "suggestDescription": "Limites proposées sur la base de vos dépenses moyennes mensuelles des {{months}} derniers mois.",
+    "suggestPeriod": "Période",
+    "suggestMonths": "mois",
+    "suggestSpent": "Dépensé {{amount}} sur la période",
+    "suggestCreate": "Créer les budgets",
+    "suggestCreated": "{{count}} budgets créés",
+    "suggestEmpty": "Aucun historique de dépenses sur la période sélectionnée pour suggérer."
   },
   "goals": {
     "title": "Objectifs",
