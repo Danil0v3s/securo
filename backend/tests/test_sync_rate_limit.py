@@ -304,6 +304,94 @@ async def test_retry_after_is_bounded(
     assert _cooldown_seconds(result_conn) <= 24 * 3600
 
 
+async def _two_same_day_pix(session, conn, user_id, workspace_id, external_id):
+    """Two real same-day payments of the same amount on one account, one of
+    them already paired as a transfer: the shape the phantom heuristic would
+    mistake for a duplicate when it has no live ids to tell them apart."""
+    from app.services.account_service import sync_opening_balance_for_connected_account
+
+    account = (
+        await session.execute(
+            select(Account).where(
+                Account.connection_id == conn.id, Account.external_id == external_id
+            )
+        )
+    ).scalar_one()
+    for ext, pair in (("pix-paired", uuid.uuid4()), ("pix-unpaired", None)):
+        session.add(Transaction(
+            id=uuid.uuid4(), user_id=user_id, workspace_id=workspace_id,
+            account_id=account.id, external_id=f"{external_id}-{ext}",
+            description="PIX SENT", amount=Decimal("50.00"), date=date.today(),
+            type="debit", status="posted", source="sync", currency="BRL",
+            transfer_pair_id=pair, created_at=datetime.now(timezone.utc),
+        ))
+    await session.flush()
+    await sync_opening_balance_for_connected_account(session, account)
+    account_id = account.id
+    await session.commit()
+    return account_id
+
+
+async def _ledger_rows(session, account_id):
+    rows = (
+        await session.execute(
+            select(Transaction.id, Transaction.amount, Transaction.type).where(
+                Transaction.account_id == account_id
+            )
+        )
+    ).all()
+    return sorted((str(r.id), r.amount, r.type) for r in rows)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("throttled_on", ["transactions", "details"])
+async def test_throttled_account_is_left_out_of_phantom_cleanup(
+    session: AsyncSession, test_user, test_workspace, throttled_on
+):
+    """A throttled account has no live ids this run: the phantom cleanup must
+    skip it rather than delete a real unpaired row and re-reconcile."""
+    conn = await _make_connection(session, test_user.id, test_workspace.id)
+    with _sync_patches(_mock_provider_two_accounts()):
+        await sync_connection(session, conn.id, test_workspace.id, test_user.id)
+    account_id = await _two_same_day_pix(
+        session, conn, test_user.id, test_workspace.id, "rl-acc-a"
+    )
+    before = await _ledger_rows(session, account_id)
+
+    if throttled_on == "transactions":
+        provider = _mock_provider_two_accounts(rate_limit_transactions_for="rl-acc-a")
+    else:
+        provider = _mock_provider_two_accounts(rate_limit_account="rl-acc-a")
+        provider.rate_limited_account_ids = {"rl-acc-a"}
+    with _sync_patches(provider):
+        _, _, outcome = await sync_connection(
+            session, conn.id, test_workspace.id, test_user.id
+        )
+
+    assert outcome == "partial"
+    assert await _ledger_rows(session, account_id) == before
+
+
+@pytest.mark.asyncio
+async def test_huge_retry_after_does_not_overflow(
+    session: AsyncSession, test_user, test_workspace
+):
+    """A finite but absurd Retry-After is capped, not an OverflowError."""
+    conn = await _make_connection(session, test_user.id, test_workspace.id)
+    provider = _mock_provider_two_accounts()
+    provider.get_accounts = AsyncMock(
+        side_effect=ProviderRateLimited("429", retry_after=1e15)
+    )
+
+    with _sync_patches(provider):
+        result_conn, _, outcome = await sync_connection(
+            session, conn.id, test_workspace.id, test_user.id
+        )
+
+    assert outcome == "rate_limited"
+    assert 23.9 * 3600 < _cooldown_seconds(result_conn) <= 24 * 3600
+
+
 @pytest.mark.asyncio
 async def test_sync_endpoint_reports_partial_outcome(
     client, auth_headers, session: AsyncSession, test_user, test_workspace

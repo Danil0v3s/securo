@@ -2257,7 +2257,10 @@ RATE_LIMIT_MAX_COOLDOWN = timedelta(hours=24)
 def _rate_limit_cooldown(retry_after: Optional[float]) -> timedelta:
     if retry_after is None:
         return RATE_LIMIT_COOLDOWN
-    return min(timedelta(seconds=retry_after), RATE_LIMIT_MAX_COOLDOWN)
+    # Clamp before building the timedelta: a huge finite Retry-After would
+    # overflow timedelta itself and escape the sync as an OverflowError.
+    seconds = min(max(retry_after, 0.0), RATE_LIMIT_MAX_COOLDOWN.total_seconds())
+    return timedelta(seconds=seconds)
 
 
 def _with_rate_limit_cooldown(
@@ -2864,9 +2867,25 @@ async def sync_connection(
         # Clean up phantom duplicates: providers occasionally double-report the
         # same payment with different ids. Once transfer detection has paired
         # the real one, the orphan twin gets removed here.
+        # A throttled account has no live id set this run (its transactions
+        # were never read, or the account itself was skipped), so the cleanup
+        # would fall back to the heuristic that can delete a real unpaired row.
+        # Leave it alone until a run reads it, as for a cut-short fetch.
+        throttled_account_ids: set[uuid.UUID] = set()
+        if rate_limited_accounts:
+            throttled_account_ids = set(
+                (
+                    await session.execute(
+                        select(Account.id).where(
+                            Account.connection_id == connection.id,
+                            Account.external_id.in_(rate_limited_accounts),
+                        )
+                    )
+                ).scalars()
+            )
         touched_account_ids = await _cleanup_phantom_duplicates(
             session, connection.id, live_txn_external_ids,
-            skip_account_ids=incomplete_fetch_account_ids,
+            skip_account_ids=incomplete_fetch_account_ids | throttled_account_ids,
         )
 
         # The opening balances above were reconciled with the phantoms still
