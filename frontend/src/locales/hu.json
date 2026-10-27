@@ -1527,6 +1527,7 @@
     "addCondition": "Feltétel hozzáadása",
     "addGroup": "Csoport hozzáadása",
     "addGroupHint": "A csoport a saját feltételeit ÉS vagy VAGY kapcsolattal köti össze",
+    "amountSignHint": "Az összegek előjelesek: a bevételek pozitívak, a kiadások negatívak.",
     "group": "Csoport",
     "removeGroup": "Csoport eltávolítása",
     "blankConditionValue": "Minden feltételhez meg kell adni egy értéket. Egy üres feltétel minden tranzakcióra illeszkedne.",

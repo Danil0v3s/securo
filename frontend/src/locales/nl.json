@@ -1527,6 +1527,7 @@
     "addCondition": "Voorwaarde toevoegen",
     "addGroup": "Groep toevoegen",
     "addGroupHint": "Een groep voegt zijn eigen voorwaarden samen met AND of OR",
+    "amountSignHint": "Bedragen hebben een teken: inkomsten zijn positief, uitgaven negatief.",
     "group": "Groep",
     "removeGroup": "Groep verwijderen",
     "blankConditionValue": "Elke voorwaarde heeft een waarde nodig. Een blanco exemplaar zou overeenkomen met elke transactie.",

@@ -1531,6 +1531,7 @@
     "addCondition": "Agregar condición",
     "addGroup": "Agregar grupo",
     "addGroupHint": "Un grupo une sus propias condiciones con Y u O",
+    "amountSignHint": "Los importes tienen signo: los ingresos son positivos, los gastos, negativos.",
     "group": "Grupo",
     "removeGroup": "Eliminar grupo",
     "blankConditionValue": "Cada condición necesita un valor. Una condición en blanco coincidiría con todas las transacciones.",

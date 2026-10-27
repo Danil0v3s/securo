@@ -1528,6 +1528,7 @@
     "addCondition": "Bedingung hinzufügen",
     "addGroup": "Gruppe hinzufügen",
     "addGroupHint": "Eine Gruppe verknüpft ihre eigenen Bedingungen mit UND oder ODER",
+    "amountSignHint": "Beträge sind vorzeichenbehaftet: Einnahmen sind positiv, Ausgaben negativ.",
     "group": "Gruppe",
     "removeGroup": "Gruppe entfernen",
     "blankConditionValue": "Jede Bedingung benötigt einen Wert. Eine leere Bedingung würde auf alle Transaktionen zutreffen.",
