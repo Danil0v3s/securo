@@ -459,6 +459,28 @@ export interface GroupBalances {
   lines: GroupBalanceLine[]
 }
 
+export interface GroupSummaryMonth {
+  /** "YYYY-MM" — the client formats it for display. */
+  month: string
+  total: number
+}
+
+export interface GroupSummaryCategory {
+  /** Null for transactions with no category. */
+  category_id: string | null
+  name: string | null
+  color: string | null
+  total: number
+}
+
+export interface GroupSummary {
+  group_id: string
+  default_currency: string
+  total_moved: number
+  months: GroupSummaryMonth[]
+  categories: GroupSummaryCategory[]
+}
+
 /** A fiscal document belonging to a payee. `kind` mirrors the backend's
  *  closed TaxIdKind; the value arrives normalised. */
 export interface PayeeTaxId {

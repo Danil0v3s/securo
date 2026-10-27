@@ -91,6 +91,7 @@ import type {
   GroupMember,
   GroupSettlement,
   GroupBalances,
+  GroupSummary,
   TransactionSplitsInput,
   TransactionEditPayload,
   InstallmentSeriesInput,
@@ -1027,6 +1028,10 @@ export const groups = {
   },
   balances: async (groupId: string): Promise<GroupBalances> => {
     const { data } = await api.get(`/groups/${groupId}/balances`)
+    return data
+  },
+  summary: async (groupId: string): Promise<GroupSummary> => {
+    const { data } = await api.get(`/groups/${groupId}/summary`)
     return data
   },
   transactions: async (groupId: string, limit = 20): Promise<Transaction[]> => {
