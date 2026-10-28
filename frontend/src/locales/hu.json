@@ -2766,7 +2766,10 @@
         "cancel_recurring_transaction": "Ismétlődő tranzakció leállítása",
         "create_goal": "Cél létrehozása",
         "link_transfer": "Összekapcsolás átvezetésként",
-        "unlink_transfer": "Átvezetés szétválasztása"
+        "unlink_transfer": "Átvezetés szétválasztása",
+        "update_goal": "Cél frissítése",
+        "update_budget": "Költségkeret frissítése",
+        "delete_budget": "Költségkeret törlése"
       },
       "summary": {
         "categorize": "{{count}} tranzakció → {{category}}",
@@ -2780,7 +2783,11 @@
         "deleteRecurring": "„{{description}}” végleges törlése",
         "createGoal": "„{{name}}” — célösszeg: {{target}}, határidő: {{deadline}}",
         "linkTransfer": "{{from}} → {{to}}",
-        "unlinkTransfer": "{{from}} és {{to}} ismét normál tranzakció lesz"
+        "unlinkTransfer": "{{from}} és {{to}} ismét normál tranzakció lesz",
+        "updateGoal": "{{name}} → {{changes}}",
+        "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
+        "deleteBudget": "{{category}}: {{amount}} – {{month}}",
+        "deleteRecurringBudget": "{{category}}: {{amount}} havonta, {{month}} kezdettel"
       }
     },
     "conversation": {

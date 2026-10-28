@@ -2754,7 +2754,10 @@
         "cancel_recurring_transaction": "Annulla transazione ricorrente",
         "create_goal": "Crea obiettivo",
         "link_transfer": "Collega come trasferimento",
-        "unlink_transfer": "Scollega trasferimento"
+        "unlink_transfer": "Scollega trasferimento",
+        "update_goal": "Aggiorna obiettivo",
+        "update_budget": "Aggiorna budget",
+        "delete_budget": "Elimina budget"
       },
       "summary": {
         "categorize": "{{count}} transazione/i → {{category}}",
@@ -2768,7 +2771,11 @@
         "deleteRecurring": "Elimina definitivamente “{{description}}”",
         "createGoal": "“{{name}}” — obiettivo {{target}}, scadenza {{deadline}}",
         "linkTransfer": "{{from}} → {{to}}",
-        "unlinkTransfer": "{{from}} e {{to}} tornano transazioni normali"
+        "unlinkTransfer": "{{from}} e {{to}} tornano transazioni normali",
+        "updateGoal": "{{name}} → {{changes}}",
+        "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
+        "deleteBudget": "{{category}}: {{amount}} per {{month}}",
+        "deleteRecurringBudget": "{{category}}: {{amount}} ogni mese da {{month}}"
       }
     },
     "conversation": {

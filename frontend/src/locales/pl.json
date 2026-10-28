@@ -2857,7 +2857,10 @@
         "cancel_recurring_transaction": "Anuluj transakcję cykliczną",
         "create_goal": "Utwórz cel",
         "link_transfer": "Połącz jako przelew",
-        "unlink_transfer": "Rozłącz przelew"
+        "unlink_transfer": "Rozłącz przelew",
+        "update_goal": "Zaktualizuj cel",
+        "update_budget": "Zaktualizuj budżet",
+        "delete_budget": "Usuń budżet"
       },
       "summary": {
         "categorize_one": "{{count}} transakcja → {{category}}",
@@ -2874,7 +2877,11 @@
         "deleteRecurring": "Trwale usuń „{{description}}”",
         "createGoal": "„{{name}}” — cel {{target}}, termin {{deadline}}",
         "linkTransfer": "{{from}} → {{to}}",
-        "unlinkTransfer": "{{from}} i {{to}} znów będą zwykłymi transakcjami"
+        "unlinkTransfer": "{{from}} i {{to}} znów będą zwykłymi transakcjami",
+        "updateGoal": "{{name}} → {{changes}}",
+        "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
+        "deleteBudget": "{{category}}: {{amount}} na {{month}}",
+        "deleteRecurringBudget": "{{category}}: {{amount}} co miesiąc od {{month}}"
       }
     },
     "conversation": {

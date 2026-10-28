@@ -2766,7 +2766,10 @@
         "cancel_recurring_transaction": "Ακύρωση επαναλαμβανόμενης συναλλαγής",
         "create_goal": "Δημιουργία στόχου",
         "link_transfer": "Σύνδεση ως μεταφορά",
-        "unlink_transfer": "Αποσύνδεση μεταφοράς"
+        "unlink_transfer": "Αποσύνδεση μεταφοράς",
+        "update_goal": "Ενημέρωση στόχου",
+        "update_budget": "Ενημέρωση προϋπολογισμού",
+        "delete_budget": "Διαγραφή προϋπολογισμού"
       },
       "summary": {
         "categorize": "{{count}} συναλλαγή(ές) → {{category}}",
@@ -2780,7 +2783,11 @@
         "deleteRecurring": "Οριστική διαγραφή του «{{description}}»",
         "createGoal": "«{{name}}» — στόχος {{target}}, προθεσμία {{deadline}}",
         "linkTransfer": "{{from}} → {{to}}",
-        "unlinkTransfer": "{{from}} και {{to}} γίνονται ξανά κανονικές συναλλαγές"
+        "unlinkTransfer": "{{from}} και {{to}} γίνονται ξανά κανονικές συναλλαγές",
+        "updateGoal": "{{name}} → {{changes}}",
+        "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
+        "deleteBudget": "{{category}}: {{amount}} για {{month}}",
+        "deleteRecurringBudget": "{{category}}: {{amount}} κάθε μήνα από {{month}}"
       }
     },
     "conversation": {
