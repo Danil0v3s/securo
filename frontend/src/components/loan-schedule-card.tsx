@@ -63,8 +63,8 @@ export function LoanScheduleCard({
 
   if (!data.configured) {
     return (
-      <div className="bg-card rounded-xl border border-border shadow-sm p-4 space-y-1">
-        <div className="flex items-center justify-between gap-3">
+      <div className="bg-card rounded-xl border border-border shadow-sm p-4 space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <h2 className="text-sm font-semibold">{t('loans.title')}</h2>
           {adjust}
         </div>
@@ -85,9 +85,9 @@ export function LoanScheduleCard({
 
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm">
-      <div className="flex items-center justify-between gap-3 px-4 pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 pt-4">
         <h2 className="text-sm font-semibold">{t('loans.title')}</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <span
             className={`text-xs font-medium ${!data.paid_off && aheadBy <= -ON_SCHEDULE_TOLERANCE ? 'text-rose-500' : 'text-emerald-600'}`}
           >
@@ -98,10 +98,10 @@ export function LoanScheduleCard({
       </div>
       <dl className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 text-sm">
         <div>
-          <dt className="text-xs text-muted-foreground">{t('loans.nextPayment')}</dt>
+          <dt className="text-xs font-medium text-muted-foreground mb-1">{t('loans.nextPayment')}</dt>
           <dd className="font-semibold tabular-nums">{data.next_payment ? money(data.next_payment.payment) : '—'}</dd>
           {data.next_payment && (
-            <dd className="text-xs text-muted-foreground">
+            <dd className="mt-1 text-xs text-muted-foreground">
               {t('loans.nextPaymentSplit', {
                 date: day(data.next_payment.due_date),
                 interest: money(data.next_payment.interest),
@@ -111,20 +111,20 @@ export function LoanScheduleCard({
           )}
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">{t('loans.remaining')}</dt>
+          <dt className="text-xs font-medium text-muted-foreground mb-1">{t('loans.remaining')}</dt>
           <dd className="font-semibold tabular-nums">
             {t('loans.remainingValue', { remaining: data.remaining_payments ?? 0, total })}
           </dd>
-          <dd className="text-xs text-muted-foreground">
+          <dd className="mt-1 text-xs text-muted-foreground">
             {t('loans.totalInterest')}: {money(data.total_interest ?? 0)}
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">{t('loans.payoff')}</dt>
+          <dt className="text-xs font-medium text-muted-foreground mb-1">{t('loans.payoff')}</dt>
           <dd className="font-semibold tabular-nums">{data.payoff_date ? day(data.payoff_date) : '—'}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">{t('loans.projectedPayoff')}</dt>
+          <dt className="text-xs font-medium text-muted-foreground mb-1">{t('loans.projectedPayoff')}</dt>
           <dd className="font-semibold tabular-nums">
             {data.projected_payoff_date ? day(data.projected_payoff_date) : '—'}
           </dd>
@@ -159,12 +159,12 @@ export function LoanScheduleCard({
                   key={row.number}
                   className={`border-t border-border ${row.number === data.next_payment?.number ? 'bg-primary/5 font-medium' : ''}`}
                 >
-                  <td className="px-4 py-1.5">{row.number}</td>
-                  <td className="px-2 py-1.5">{day(row.due_date)}</td>
-                  <td className="px-2 py-1.5 text-right">{money(row.payment)}</td>
-                  <td className="px-2 py-1.5 text-right">{money(row.interest)}</td>
-                  <td className="px-2 py-1.5 text-right">{money(row.principal)}</td>
-                  <td className="px-4 py-1.5 text-right">{money(row.balance)}</td>
+                  <td className="px-4 py-2">{row.number}</td>
+                  <td className="px-2 py-2">{day(row.due_date)}</td>
+                  <td className="px-2 py-2 text-right">{money(row.payment)}</td>
+                  <td className="px-2 py-2 text-right">{money(row.interest)}</td>
+                  <td className="px-2 py-2 text-right">{money(row.principal)}</td>
+                  <td className="px-4 py-2 text-right">{money(row.balance)}</td>
                 </tr>
               ))}
             </tbody>
