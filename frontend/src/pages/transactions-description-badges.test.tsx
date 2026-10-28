@@ -80,7 +80,9 @@ vi.mock('@/contexts/collection-filter-context', () => ({
 // same line as the description.
 const crowded: Transaction = {
   id: 'tx-crowded', user_id: 'user-1', account_id: 'acc-1',
-  description: 'Transfer to Vinicius in installments',
+  // Deliberately free of the badge words: an assertion on the badges below
+  // would otherwise pass on the description's own text.
+  description: 'Payment to Vinicius in 18 parts',
   category_id: 'cat-1',
   category: {
     id: 'cat-1', name: 'Transfers', icon: 'arrow-left-right',
@@ -119,13 +121,17 @@ describe('the description cell on a row with several badges', () => {
   it('wraps the badges instead of letting them run into the next column', async () => {
     renderWithProviders(<TransactionsPage />, { route: '/transactions', path: '/transactions' })
 
-    const description = await screen.findByText('Transfer to Vinicius in installments')
+    const description = await screen.findByText('Payment to Vinicius in 18 parts')
     const line = description.parentElement!
 
-    // All three badges share the line with the description.
-    expect(line).toHaveTextContent('Transfer')
-    expect(line).toHaveTextContent('Not in reports')
-    expect(line).toHaveTextContent('18/18')
+    // All three badges share the line with the description. Each one is
+    // looked up as its own element, so dropping a badge fails the test
+    // instead of being covered by the text of its neighbours.
+    const badges = Array.from(line.children).filter((child) => child !== description)
+    const labels = badges.map((badge) => badge.textContent?.trim())
+    expect(labels).toContain('Transfer')
+    expect(labels).toContain('Not in reports')
+    expect(labels).toContain('18/18')
 
     expect(line.className).toContain('flex-wrap')
 

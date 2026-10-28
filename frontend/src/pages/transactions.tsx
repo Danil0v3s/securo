@@ -1114,6 +1114,18 @@ export default function TransactionsPage() {
     const showInlineTags = !grid.isVisible('tags')
     const noteText = tx.notes ? stripHashtags(tx.notes) : ''
     const noteTags = tx.notes ? parseHashtags(tx.notes) : []
+    // A long group or author name truncates inside its badge, so the label
+    // doubles as its own tooltip and stays readable on hover.
+    const groupBadgeLabel = tx.group_id
+      ? tx.is_shared && tx.parent_owner_name
+        ? t('splitGroups.sharedRowBadgeAuthor', {
+            author: tx.parent_owner_name,
+            group: groupNameById.get(tx.group_id) ?? '',
+          })
+        : t('splitGroups.ownerRowBadge', {
+            group: groupNameById.get(tx.group_id) ?? '',
+          })
+      : ''
     return (
       <div className="flex items-center gap-2 md:gap-3">
         <CategoryIcon icon={tx.category?.icon} color={tx.category?.color} size="lg" />
@@ -1124,24 +1136,17 @@ export default function TransactionsPage() {
               Category column next to it (issue #1306). Wrapping keeps every
               badge inside the cell: they move to a second line instead of
               escaping, and the description keeps its own width rather than
-              being squeezed to nothing. */}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              being squeezed to nothing. The overflow guard is the backstop:
+              the column can be dragged down to 41px, narrower than a single
+              badge, and there the badges clip at the cell edge instead. */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 overflow-hidden">
             <p className="max-w-full text-sm font-semibold text-foreground truncate">{tx.description}</p>
             {tx.group_id && (
               <span
                 className="inline-flex max-w-full items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700 bg-violet-50 border border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-900 px-1.5 py-0.5 rounded-full"
                 title={t('splitGroups.sharedRowTooltip')}
               >
-                <span className="truncate">
-                  {tx.is_shared && tx.parent_owner_name
-                    ? t('splitGroups.sharedRowBadgeAuthor', {
-                        author: tx.parent_owner_name,
-                        group: groupNameById.get(tx.group_id) ?? '',
-                      })
-                    : t('splitGroups.ownerRowBadge', {
-                        group: groupNameById.get(tx.group_id) ?? '',
-                      })}
-                </span>
+                <span className="truncate" title={groupBadgeLabel}>{groupBadgeLabel}</span>
               </span>
             )}
             {/* The invoice this settles. Same badge shape as the split
@@ -1185,8 +1190,13 @@ export default function TransactionsPage() {
                 </span>
               </Link>
             ))}
+            {/* The label and the two icons keep their size, so that a
+                narrow column shortens the counterpart account name and
+                not the word that says what the badge is. Past the point
+                where even that no longer fits, the badge clips at the
+                cell edge rather than carrying on into the next column. */}
             {isTransferTransaction(tx) && (
-              <span className="inline-flex max-w-full items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full">
+              <span className="inline-flex max-w-full items-center gap-1 overflow-hidden text-[10px] font-semibold uppercase tracking-wide text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full">
                 <ArrowLeftRight className="h-3 w-3 shrink-0" />
                 <span className="shrink-0">{t('transactions.transfer')}</span>
                 {tx.transfer_counterpart && (
