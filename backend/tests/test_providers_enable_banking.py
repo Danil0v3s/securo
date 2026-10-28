@@ -102,6 +102,7 @@ def test_cash_account_type_mapping():
     assert _map_cash_account_type("CACC") == "checking"
     assert _map_cash_account_type("SVGS") == "savings"
     assert _map_cash_account_type("CARD") == "credit_card"
+    assert _map_cash_account_type("LOAN") == "checking"
     assert _map_cash_account_type(None) == "checking"
     assert _map_cash_account_type("UNKNOWN_TYPE") == "checking"
 
@@ -318,6 +319,56 @@ async def test_handle_oauth_callback_builds_connection_data(eb_keys):
     # session_id must NOT appear in credentials in plaintext.
     assert "session_id_enc" in conn.credentials
     assert conn.credentials.get("session_id") is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("reported", ["-250000.00", "250000.00"])
+async def test_loan_account_keeps_the_bank_reported_balance(eb_keys, reported):
+    """Sign normalization happens on storage, by the account's stored type
+    (account_service._provider_to_internal_balance), not in the provider."""
+    provider = EnableBankingProvider()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/sessions":
+            return httpx.Response(
+                200,
+                json={
+                    "session_id": "sess-loan",
+                    "accounts": [
+                        {
+                            "uid": "loan-uid-1",
+                            "currency": "EUR",
+                            "display_name": "Mortgage",
+                            "cash_account_type": "LOAN",
+                        }
+                    ],
+                    "aspsp": {"name": "ING", "country": "NL"},
+                    "access": {"valid_until": "2026-12-01T00:00:00Z"},
+                },
+            )
+        if path == "/accounts/loan-uid-1/balances":
+            return httpx.Response(
+                200,
+                json={
+                    "balances": [
+                        {
+                            "balance_type": "CLBD",
+                            "balance_amount": {"amount": reported, "currency": "EUR"},
+                        }
+                    ]
+                },
+            )
+        return httpx.Response(404)
+
+    with _patch_client(provider, handler):
+        conn = await provider.handle_oauth_callback("code-loan")
+    acc = conn.accounts[0]
+    # A LOAN account still maps to checking: loans on a bank connection are
+    # not modelled yet. What matters here is that the provider passes the
+    # reported balance through untouched, whatever the type.
+    assert acc.type == "checking"
+    assert acc.balance == Decimal(reported)
 
 
 @pytest.mark.asyncio

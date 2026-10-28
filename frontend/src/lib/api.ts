@@ -550,6 +550,49 @@ export const accounts = {
   },
 }
 
+export interface MortgagePaymentAllocation {
+  loan_account_id: string
+  loan_name: string
+  principal_amount: number
+  interest_amount: number
+  payment_amount: number
+  principal_percentage: number
+  interest_percentage: number
+  historical: boolean
+  bank_managed: boolean
+}
+
+export const mortgagePayments = {
+  get: async (paymentId: string): Promise<{
+    payment_transaction_id: string
+    payment_amount: number
+    currency: string
+    payment_account_name: string
+    allocations: MortgagePaymentAllocation[]
+    principal_total: number
+    interest_total: number
+    principal_percentage: number
+    interest_percentage: number
+  }> => {
+    const { data } = await api.get(`/mortgage-payments/${paymentId}`)
+    return data
+  },
+  replace: async (
+    paymentId: string,
+    allocations: {
+      loan_account_id: string
+      principal_amount: number
+      interest_amount: number
+    }[],
+  ) => {
+    const { data } = await api.put(`/mortgage-payments/${paymentId}`, { allocations })
+    return data
+  },
+  remove: async (paymentId: string): Promise<void> => {
+    await api.delete(`/mortgage-payments/${paymentId}`)
+  },
+}
+
 // Transactions
 export const transactions = {
   list: async (params?: {

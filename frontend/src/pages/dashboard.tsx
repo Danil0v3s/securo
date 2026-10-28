@@ -1812,7 +1812,14 @@ export default function DashboardPage() {
         transaction={editingTx}
         categories={categoriesList ?? []}
         categoryGroups={categoryGroupsList ?? []}
-        accounts={(accountsList ?? []).map((a: { id: string; name: string; display_name?: string | null }) => ({ id: a.id, name: getAccountName(a) }))}
+        accounts={(accountsList ?? []).map((a) => ({
+          id: a.id,
+          name: getAccountName(a),
+          display_name: a.display_name,
+          type: a.type,
+          currency: a.currency,
+          secured_asset_id: a.secured_asset_id,
+        }))}
         onSave={(data) => {
           if (editingTx) updateMutation.mutate({ id: editingTx.id, ...data })
         }}
