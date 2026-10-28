@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
@@ -8,6 +8,15 @@ import { formatCurrency } from '@/lib/format'
 
 /** Below this difference from the contract, the loan reads as on schedule. */
 const ON_SCHEDULE_TOLERANCE = 1
+
+/**
+ * Where the schedule should sit so a row reads as the current installment:
+ * roughly centred, which keeps the installments already paid visible above it.
+ * Clamped at zero so an early installment leaves the table at its top.
+ */
+function scheduleScrollTop(rowOffset: number, viewportHeight: number): number {
+  return Math.max(0, Math.round(rowOffset - viewportHeight / 2))
+}
 
 /**
  * A loan's contract next to its real balance: next payment, what is left,
@@ -35,6 +44,20 @@ export function LoanScheduleCard({
     queryKey: ['accounts', accountId, 'loan-schedule'],
     queryFn: () => accounts.loanSchedule(accountId),
   })
+  const scheduleRef = useRef<HTMLDivElement>(null)
+  const currentRowRef = useRef<HTMLTableRowElement>(null)
+  const currentNumber = data?.next_payment?.number
+
+  // A long contract opens on installment 1, which on a mortgage is hundreds of
+  // rows above where the borrower actually is. Put the current one in view.
+  useEffect(() => {
+    const container = scheduleRef.current
+    const row = currentRowRef.current
+    if (!showSchedule || !container || !row) return
+    const offset = row.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop
+    container.scrollTop = scheduleScrollTop(offset, container.clientHeight)
+  }, [showSchedule, currentNumber])
+
   if (!data) return null
 
   const money = (value: number) => mask(formatCurrency(value, data.currency, locale))
@@ -141,7 +164,7 @@ export function LoanScheduleCard({
         </button>
       </div>
       {showSchedule && (
-        <div className="max-h-96 overflow-auto border-t border-border">
+        <div ref={scheduleRef} className="max-h-96 overflow-auto border-t border-border">
           <table className="w-full text-xs tabular-nums">
             <thead className="sticky top-0 bg-card text-muted-foreground">
               <tr>
@@ -157,7 +180,9 @@ export function LoanScheduleCard({
               {data.installments.map((row) => (
                 <tr
                   key={row.number}
-                  className={`border-t border-border ${row.number === data.next_payment?.number ? 'bg-primary/5 font-medium' : ''}`}
+                  ref={row.number === currentNumber ? currentRowRef : undefined}
+                  aria-current={row.number === currentNumber ? 'step' : undefined}
+                  className={`border-t border-border ${row.number === currentNumber ? 'bg-primary/5 font-medium' : ''}`}
                 >
                   <td className="px-4 py-2">{row.number}</td>
                   <td className="px-2 py-2">{day(row.due_date)}</td>
