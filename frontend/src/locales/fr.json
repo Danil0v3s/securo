@@ -2770,7 +2770,10 @@
         "cancel_recurring_transaction": "Annuler une transaction récurrente",
         "create_goal": "Créer un objectif",
         "link_transfer": "Lier comme virement",
-        "unlink_transfer": "Délier le virement"
+        "unlink_transfer": "Délier le virement",
+        "update_goal": "Mettre à jour un objectif",
+        "update_budget": "Mettre à jour un budget",
+        "delete_budget": "Supprimer un budget"
       },
       "summary": {
         "categorize": "{{count}} transaction(s) → {{category}}",
@@ -2784,7 +2787,11 @@
         "deleteRecurring": "Supprimer définitivement « {{description}} »",
         "createGoal": "« {{name}} » — cible {{target}}, échéance {{deadline}}",
         "linkTransfer": "{{from}} → {{to}}",
-        "unlinkTransfer": "{{from}} et {{to}} redeviennent des transactions ordinaires"
+        "unlinkTransfer": "{{from}} et {{to}} redeviennent des transactions ordinaires",
+        "updateGoal": "{{name}} → {{changes}}",
+        "updateBudget": "{{category}} ({{month}}) : {{before}} → {{after}}",
+        "deleteBudget": "{{category}} : {{amount}} pour {{month}}",
+        "deleteRecurringBudget": "{{category}} : {{amount}} chaque mois à partir de {{month}}"
       }
     },
     "conversation": {

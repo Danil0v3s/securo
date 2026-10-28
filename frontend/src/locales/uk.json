@@ -2783,7 +2783,10 @@
         "cancel_recurring_transaction": "Скасувати регулярну транзакцію",
         "create_goal": "Створити ціль",
         "link_transfer": "Пов'язати як переказ",
-        "unlink_transfer": "Розірвати зв'язок переказу"
+        "unlink_transfer": "Розірвати зв'язок переказу",
+        "update_goal": "Оновити ціль",
+        "update_budget": "Оновити бюджет",
+        "delete_budget": "Видалити бюджет"
       },
       "summary": {
         "categorize": "{{count}} транзакцій → {{category}}",
@@ -2797,7 +2800,11 @@
         "deleteRecurring": "Назавжди видалити «{{description}}»",
         "createGoal": "«{{name}}» — ціль {{target}}, термін {{deadline}}",
         "linkTransfer": "{{from}} → {{to}}",
-        "unlinkTransfer": "{{from}} і {{to}} знову стануть звичайними операціями"
+        "unlinkTransfer": "{{from}} і {{to}} знову стануть звичайними операціями",
+        "updateGoal": "{{name}} → {{changes}}",
+        "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
+        "deleteBudget": "{{category}}: {{amount}} на {{month}}",
+        "deleteRecurringBudget": "{{category}}: {{amount}} щомісяця з {{month}}"
       }
     },
     "conversation": {

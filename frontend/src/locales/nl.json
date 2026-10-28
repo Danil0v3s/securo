@@ -2768,7 +2768,10 @@
         "cancel_recurring_transaction": "Terugkerende transactie annuleren",
         "create_goal": "Doel creëren",
         "link_transfer": "Koppelen als overboeking",
-        "unlink_transfer": "Overboeking ontkoppelen"
+        "unlink_transfer": "Overboeking ontkoppelen",
+        "update_goal": "Doel bijwerken",
+        "update_budget": "Begroting bijwerken",
+        "delete_budget": "Begroting verwijderen"
       },
       "summary": {
         "categorize": "{{count}} transactie(s) → {{category}}",
@@ -2782,7 +2785,11 @@
         "deleteRecurring": "“{{description}}” definitief verwijderen",
         "createGoal": "“{{name}}” — doel {{target}}, deadline {{deadline}}",
         "linkTransfer": "{{from}} → {{to}}",
-        "unlinkTransfer": "{{from}} en {{to}} worden weer gewone transacties"
+        "unlinkTransfer": "{{from}} en {{to}} worden weer gewone transacties",
+        "updateGoal": "{{name}} → {{changes}}",
+        "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
+        "deleteBudget": "{{category}}: {{amount}} voor {{month}}",
+        "deleteRecurringBudget": "{{category}}: {{amount}} per maand vanaf {{month}}"
       }
     },
     "conversation": {

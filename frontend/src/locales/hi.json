@@ -2766,7 +2766,10 @@
         "cancel_recurring_transaction": "आवर्ती लेन-देन रद्द करें",
         "create_goal": "लक्ष्य बनाएँ",
         "link_transfer": "ट्रांसफ़र के रूप में जोड़ें",
-        "unlink_transfer": "ट्रांसफ़र अलग करें"
+        "unlink_transfer": "ट्रांसफ़र अलग करें",
+        "update_goal": "लक्ष्य अपडेट करें",
+        "update_budget": "बजट अपडेट करें",
+        "delete_budget": "बजट हटाएँ"
       },
       "summary": {
         "categorize": "{{count}} लेन-देन → {{category}}",
@@ -2780,7 +2783,11 @@
         "deleteRecurring": "“{{description}}” को स्थायी रूप से हटाएँ",
         "createGoal": "“{{name}}” — लक्ष्य {{target}}, समय-सीमा {{deadline}}",
         "linkTransfer": "{{from}} → {{to}}",
-        "unlinkTransfer": "{{from}} और {{to}} फिर से सामान्य लेनदेन बन जाएँगे"
+        "unlinkTransfer": "{{from}} और {{to}} फिर से सामान्य लेनदेन बन जाएँगे",
+        "updateGoal": "{{name}} → {{changes}}",
+        "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
+        "deleteBudget": "{{category}}: {{month}} के लिए {{amount}}",
+        "deleteRecurringBudget": "{{category}}: {{month}} से हर महीने {{amount}}"
       }
     },
     "conversation": {

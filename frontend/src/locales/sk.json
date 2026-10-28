@@ -2906,7 +2906,10 @@
         "cancel_recurring_transaction": "Zrušiť opakovanú transakciu",
         "create_goal": "Vytvoriť cieľ",
         "link_transfer": "Prepojiť ako prevod",
-        "unlink_transfer": "Zrušiť prepojenie prevodu"
+        "unlink_transfer": "Zrušiť prepojenie prevodu",
+        "update_goal": "Upraviť cieľ",
+        "update_budget": "Upraviť rozpočet",
+        "delete_budget": "Vymazať rozpočet"
       },
       "summary": {
         "categorize": "{{count}} transakcií → {{category}}",
@@ -2924,7 +2927,11 @@
         "deleteRecurring": "Natrvalo vymazať „{{description}}“",
         "createGoal": "„{{name}}“ — cieľová suma {{target}}, termín {{deadline}}",
         "linkTransfer": "{{from}} → {{to}}",
-        "unlinkTransfer": "{{from}} a {{to}} budú opäť bežné transakcie"
+        "unlinkTransfer": "{{from}} a {{to}} budú opäť bežné transakcie",
+        "updateGoal": "{{name}} → {{changes}}",
+        "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
+        "deleteBudget": "{{category}}: {{amount}} na {{month}}",
+        "deleteRecurringBudget": "{{category}}: {{amount}} každý mesiac od {{month}}"
       }
     },
     "conversation": {
