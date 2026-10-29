@@ -19,6 +19,18 @@ export function shiftMonth(yearMonth: string, delta: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+/**
+ * The `"YYYY-MM"` month whose reporting period contains today. Without a pay
+ * cycle this is the calendar month. With a cycle start day D, the period
+ * labeled by month M starts on day D of month M-1 (see `periodRange`), so from
+ * payday onward today already belongs to next month's period.
+ */
+export function currentPeriodMonth(cycleStartDay?: number | null): string {
+  const month = currentMonth()
+  if (!cycleStartDay) return month
+  return new Date().getDate() >= cycleStartDay ? shiftMonth(month, 1) : month
+}
+
 /** Last day-of-month number for a `"YYYY-MM"` month (28–31, leap-year aware). */
 export function monthLastDay(yearMonth: string): number {
   const [y, m] = yearMonth.split('-').map(Number)

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   currentMonth,
+  currentPeriodMonth,
   monthFromRange,
   monthLabel,
   monthLastDay,
@@ -27,6 +28,39 @@ describe('currentMonth', () => {
     vi.setSystemTime(new Date(2026, 10, 3))
 
     expect(currentMonth()).toBe('2026-11')
+  })
+})
+
+describe('currentPeriodMonth', () => {
+  it('is the calendar month without a pay cycle', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 29))
+
+    expect(currentPeriodMonth()).toBe('2026-10')
+    expect(currentPeriodMonth(null)).toBe('2026-10')
+  })
+
+  it('stays on this month before payday', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 24))
+
+    expect(currentPeriodMonth(25)).toBe('2026-10')
+  })
+
+  it('moves to next month from payday onward', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 25))
+    expect(currentPeriodMonth(25)).toBe('2026-11')
+
+    vi.setSystemTime(new Date(2026, 9, 29))
+    expect(currentPeriodMonth(25)).toBe('2026-11')
+  })
+
+  it('rolls over into next year after a December payday', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 11, 28))
+
+    expect(currentPeriodMonth(25)).toBe('2027-01')
   })
 })
 

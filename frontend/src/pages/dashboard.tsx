@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { getAccountLabel, getAccountName, sortAccountsByAbsoluteBalance, sumAccountBalances } from '@/lib/account-utils'
-import { currentMonth, shiftMonth, monthLabel, monthRange, periodRange } from '@/lib/month-utils'
+import { currentPeriodMonth, shiftMonth, monthLabel, monthRange, periodRange } from '@/lib/month-utils'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -116,6 +116,8 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const userCurrency = user?.preferences?.currency_display ?? 'USD'
   const displayName = user?.preferences?.display_name || ''
+  // Pay-cycle start day; null = calendar months.
+  const cycleStartDay = user?.preferences?.pay_cycle_start_day ?? null
   const locale = useDisplayLocale()
   const dateLocale = useDateLocale()
 
@@ -126,8 +128,10 @@ export default function DashboardPage() {
     return displayName ? `${base}, ${displayName}` : base
   })()
   const [searchParams, setSearchParams] = useSearchParams()
+  // Without a month in the URL, open on the period that contains today: the
+  // calendar month, or with a pay cycle the payday→payday period running now.
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    return parseMonthFromParams(searchParams) ?? currentMonth()
+    return parseMonthFromParams(searchParams) ?? currentPeriodMonth(cycleStartDay)
   })
   const [drillDown, setDrillDown] = useState<DrillDownFilter | null>(null)
   // Transactions section view, mirroring the transactions page: the choice
@@ -152,11 +156,11 @@ export default function DashboardPage() {
     if (parsedMonth) {
       setSelectedMonth(parsedMonth)
     } else if (!isInitial) {
-      setSelectedMonth(currentMonth())
+      setSelectedMonth(currentPeriodMonth(cycleStartDay))
     }
     setTxViewMode(searchParams.get('view') === 'calendar' ? 'calendar' : 'list')
     setCalendarSelectedDate(searchParams.get('day') ?? '')
-  }, [searchParams])
+  }, [searchParams, cycleStartDay])
 
   // Sync selectedMonth and the transactions view back to URL
   useEffect(() => {
@@ -195,7 +199,6 @@ export default function DashboardPage() {
   const monthParam = monthStart
   // Pay-cycle period (payday→payday) when the user has a cycle configured; else
   // the calendar month. Drives every dashboard card so they stay consistent.
-  const cycleStartDay = user?.preferences?.pay_cycle_start_day ?? null
   const cycleActive = cycleStartDay != null
   const { from: periodFrom, to: periodTo } = periodRange(selectedMonth, cycleStartDay)
   const uiLocale = i18n.resolvedLanguage ?? i18n.language
