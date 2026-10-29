@@ -2164,6 +2164,7 @@
     "byIncome": "収入別",
     "byExpenses": "支出別",
     "net": "純額",
+    "netFlow": "純キャッシュフロー",
     "assetsAndAccounts": "資産と口座",
     "youOwn": "あなたの資産",
     "youOwe": "あなたの負債",

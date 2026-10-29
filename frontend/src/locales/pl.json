@@ -2253,6 +2253,7 @@
     "byIncome": "Przychody",
     "byExpenses": "Wydatki",
     "net": "Netto",
+    "netFlow": "Przepływ netto",
     "assetsAndAccounts": "Aktywa i Konta",
     "youOwn": "Posiadasz",
     "youOwe": "Jesteś winien",

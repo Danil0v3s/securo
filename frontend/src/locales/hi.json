@@ -2164,6 +2164,7 @@
     "byIncome": "आय के अनुसार",
     "byExpenses": "खर्च के अनुसार",
     "net": "निवल",
+    "netFlow": "शुद्ध प्रवाह",
     "assetsAndAccounts": "संपत्तियाँ और खाते",
     "youOwn": "आपके पास",
     "youOwe": "आप पर बकाया",

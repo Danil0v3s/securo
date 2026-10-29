@@ -2280,6 +2280,7 @@
     "byIncome": "Podľa príjmov",
     "byExpenses": "Podľa výdavkov",
     "net": "Čisté",
+    "netFlow": "Čistý tok",
     "assetsAndAccounts": "Aktíva a účty",
     "youOwn": "Vlastníš",
     "youOwe": "Dlhuješ",

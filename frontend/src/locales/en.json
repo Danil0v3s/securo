@@ -2164,6 +2164,7 @@
     "byIncome": "By Income",
     "byExpenses": "By Expenses",
     "net": "Net",
+    "netFlow": "Net flow",
     "assetsAndAccounts": "Assets & Accounts",
     "youOwn": "You Own",
     "youOwe": "You Owe",

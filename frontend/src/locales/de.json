@@ -2165,6 +2165,7 @@
     "byIncome": "Nach Einnahmen",
     "byExpenses": "Nach Ausgaben",
     "net": "Netto",
+    "netFlow": "Netto-Cashflow",
     "assetsAndAccounts": "Vermögenswerte & Konten",
     "youOwn": "Dein Besitz",
     "youOwe": "Deine Schulden",

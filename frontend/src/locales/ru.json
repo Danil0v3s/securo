@@ -2180,6 +2180,7 @@
     "byIncome": "По доходам",
     "byExpenses": "По расходам",
     "net": "Чистый",
+    "netFlow": "Чистый поток",
     "assetsAndAccounts": "Активы и счета",
     "youOwn": "Вам принадлежит",
     "youOwe": "Вы должны",
