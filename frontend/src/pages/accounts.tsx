@@ -773,6 +773,7 @@ export function AccountDialog({
     credit_limit?: number | null
     statement_close_day?: number | null
     payment_due_day?: number | null
+    payment_percent?: number | null
   }) => void
   loading: boolean
 }) {
@@ -801,6 +802,7 @@ export function AccountDialog({
   const [creditLimit, setCreditLimit] = useState(account?.credit_limit?.toString() ?? '')
   const [statementCloseDay, setStatementCloseDay] = useState(account?.statement_close_day?.toString() ?? '')
   const [paymentDueDay, setPaymentDueDay] = useState(account?.payment_due_day?.toString() ?? '')
+  const [paymentPercent, setPaymentPercent] = useState(account?.payment_percent?.toString() ?? '')
   const [securedAssetId, setSecuredAssetId] = useState(account?.secured_asset_id ?? '')
   const [loanTerms, setLoanTerms] = useState(() => loanTermsFrom(account, account?.currency ?? userCurrency))
   // Opened by the user, not by the amount: clearing the amount must not collapse it.
@@ -828,6 +830,7 @@ export function AccountDialog({
     setCreditLimit(account?.credit_limit?.toString() ?? '')
     setStatementCloseDay(account?.statement_close_day?.toString() ?? '')
     setPaymentDueDay(account?.payment_due_day?.toString() ?? '')
+    setPaymentPercent(account?.payment_percent?.toString() ?? '')
     setSecuredAssetId(account?.secured_asset_id ?? '')
     setLoanTerms(loanTermsFrom(account, account?.currency ?? userCurrency))
     setTermsOpen(account?.loan_original_amount != null)
@@ -850,6 +853,11 @@ export function AccountDialog({
               const n = parseInt(v, 10)
               return Number.isFinite(n) && n >= 1 && n <= 31 ? n : null
             }
+            const parsePercent = (v: string) => {
+              if (v.trim() === '') return null
+              const n = parseInt(v, 10)
+              return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : null
+            }
             const isConnected = !!account?.connection_id
             // Editing: only move the opening balance when the date was changed.
             const dateChanged = !account || balanceDate !== formSource?.balanceDate
@@ -870,6 +878,7 @@ export function AccountDialog({
                 credit_limit: creditLimit !== '' ? parseFloat(creditLimit) : null,
                 statement_close_day: parseDay(statementCloseDay),
                 payment_due_day: parseDay(paymentDueDay),
+                payment_percent: parsePercent(paymentPercent),
               }),
             })
           }}
@@ -1069,6 +1078,20 @@ export function AccountDialog({
                     placeholder={t('accounts.dayOfMonthHint')}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>{t('accounts.paymentPercent', 'Payment each cycle (% of balance)')}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={paymentPercent}
+                  onChange={(e) => setPaymentPercent(e.target.value)}
+                  placeholder={t('accounts.paymentPercentPlaceholder', 'Full payment')}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t('accounts.paymentPercentHint', 'For revolving cards: the share of the balance you plan to pay each cycle. Leave empty to assume you pay in full.')}
+                </p>
               </div>
             </div>
           )}

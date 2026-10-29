@@ -30,6 +30,7 @@ class AccountCreate(BaseModel):
     statement_close_day: Optional[int] = None
     payment_due_day: Optional[int] = None
     minimum_payment: Optional[Decimal] = None
+    payment_percent: Optional[int] = None
     card_brand: Optional[str] = None
     card_level: Optional[str] = None
     # Loan accounts only: contract terms, all optional (see loan_schedule.py).
@@ -53,6 +54,7 @@ class AccountUpdate(BaseModel):
     statement_close_day: Optional[int] = None
     payment_due_day: Optional[int] = None
     minimum_payment: Optional[Decimal] = None
+    payment_percent: Optional[int] = None
     card_brand: Optional[str] = None
     card_level: Optional[str] = None
     # Loan accounts only: contract terms, all optional (see loan_schedule.py).
@@ -94,6 +96,7 @@ class AccountRead(AccountBase):
     next_close_date: Optional[date] = None
     next_due_date: Optional[date] = None
     minimum_payment: Optional[float] = None
+    payment_percent: Optional[int] = None
     card_brand: Optional[str] = None
     card_level: Optional[str] = None
     loan_kind: Optional[str] = None

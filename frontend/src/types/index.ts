@@ -205,6 +205,9 @@ export interface Account {
   next_close_date: string | null
   next_due_date: string | null
   minimum_payment: number | null
+  // Percent (0–100) of the card balance the user plans to pay each cycle.
+  // null = pay in full. Drives the revolving-payment cash figure.
+  payment_percent?: number | null
   card_brand: string | null
   card_level: string | null
   shared_balance_group: string | null

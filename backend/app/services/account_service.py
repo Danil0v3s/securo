@@ -348,6 +348,7 @@ def serialize_account(
         "statement_close_day": acc.statement_close_day,
         "payment_due_day": acc.payment_due_day,
         "minimum_payment": float(acc.minimum_payment) if acc.minimum_payment is not None else None,
+        "payment_percent": acc.payment_percent,
         "card_brand": acc.card_brand,
         "card_level": acc.card_level,
         "loan_kind": acc.loan_kind,
@@ -450,6 +451,7 @@ async def create_account(
         statement_close_day=data.statement_close_day if is_cc else None,
         payment_due_day=data.payment_due_day if is_cc else None,
         minimum_payment=data.minimum_payment if is_cc else None,
+        payment_percent=data.payment_percent if is_cc else None,
         card_brand=data.card_brand if is_cc else None,
         card_level=data.card_level if is_cc else None,
         **{field: getattr(data, field) if data.type == "loan" else None for field in LOAN_TERM_FIELDS},
@@ -548,6 +550,7 @@ async def update_account(
             "statement_close_day",
             "payment_due_day",
             "minimum_payment",
+            "payment_percent",
             "card_brand",
             "card_level",
             *LOAN_TERM_FIELDS,
@@ -595,6 +598,7 @@ async def update_account(
             account.statement_close_day = None
             account.payment_due_day = None
             account.minimum_payment = None
+            account.payment_percent = None
             account.card_brand = None
             account.card_level = None
         if new_type != "loan":
@@ -613,6 +617,7 @@ async def update_account(
         account.statement_close_day = None
         account.payment_due_day = None
         account.minimum_payment = None
+        account.payment_percent = None
         account.card_brand = None
         account.card_level = None
     if account.type != "loan":

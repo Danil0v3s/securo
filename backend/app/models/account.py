@@ -62,6 +62,10 @@ class Account(Base):
     statement_close_day: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
     payment_due_day: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
     minimum_payment: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=15, scale=2), nullable=True)
+    # Percent (0–100) of the outstanding balance the user plans to pay each
+    # cycle on a revolving card. NULL = pay in full (default). Drives the
+    # near-term cash-impact figure; the remainder revolves (no interest modeled).
+    payment_percent: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
     card_brand: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     card_level: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     shared_balance_group: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)

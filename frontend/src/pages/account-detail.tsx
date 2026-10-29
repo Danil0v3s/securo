@@ -661,7 +661,7 @@ export default function AccountDetailPage() {
 
   const [ccSettingsOpen, setCcSettingsOpen] = useState(false)
   const ccSettingsMutation = useMutation({
-    mutationFn: (data: { credit_limit?: number | null; statement_close_day?: number | null; payment_due_day?: number | null }) =>
+    mutationFn: (data: { credit_limit?: number | null; statement_close_day?: number | null; payment_due_day?: number | null; payment_percent?: number | null }) =>
       accounts.update(id!, data),
     onSuccess: () => {
       invalidateFinancialQueries(queryClient)
@@ -1852,16 +1852,17 @@ function CreditCardSettingsDialog({
 }: {
   open: boolean
   onClose: () => void
-  account: { credit_limit: number | null; statement_close_day: number | null; payment_due_day: number | null }
-  onSave: (data: { credit_limit: number | null; statement_close_day: number | null; payment_due_day: number | null }) => void
+  account: { credit_limit: number | null; statement_close_day: number | null; payment_due_day: number | null; payment_percent?: number | null }
+  onSave: (data: { credit_limit: number | null; statement_close_day: number | null; payment_due_day: number | null; payment_percent: number | null }) => void
   loading: boolean
 }) {
   const { t } = useTranslation()
   const [creditLimit, setCreditLimit] = useState('')
   const [closeDay, setCloseDay] = useState('')
   const [dueDay, setDueDay] = useState('')
+  const [paymentPercent, setPaymentPercent] = useState('')
 
-  const formKey = JSON.stringify([open, account.credit_limit, account.statement_close_day, account.payment_due_day])
+  const formKey = JSON.stringify([open, account.credit_limit, account.statement_close_day, account.payment_due_day, account.payment_percent])
   const [previousFormKey, setPreviousFormKey] = useState<string | null>(null)
   if (formKey !== previousFormKey) {
     setPreviousFormKey(formKey)
@@ -1869,12 +1870,19 @@ function CreditCardSettingsDialog({
       setCreditLimit(account.credit_limit != null ? String(account.credit_limit) : '')
       setCloseDay(account.statement_close_day != null ? String(account.statement_close_day) : '')
       setDueDay(account.payment_due_day != null ? String(account.payment_due_day) : '')
+      setPaymentPercent(account.payment_percent != null ? String(account.payment_percent) : '')
     }
   }
 
   const parseDay = (v: string): number | null => {
     const n = parseInt(v, 10)
     return Number.isFinite(n) && n >= 1 && n <= 31 ? n : null
+  }
+
+  const parsePercent = (v: string): number | null => {
+    if (v.trim() === '') return null
+    const n = parseInt(v, 10)
+    return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : null
   }
 
   return (
@@ -1890,6 +1898,7 @@ function CreditCardSettingsDialog({
               credit_limit: creditLimit !== '' ? parseFloat(creditLimit) : null,
               statement_close_day: parseDay(closeDay),
               payment_due_day: parseDay(dueDay),
+              payment_percent: parsePercent(paymentPercent),
             })
           }}
           className="space-y-4"
@@ -1933,6 +1942,20 @@ function CreditCardSettingsDialog({
                 placeholder={t('accounts.dayOfMonthHint')}
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>{t('accounts.paymentPercent', 'Payment each cycle (% of balance)')}</Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={paymentPercent}
+              onChange={(e) => setPaymentPercent(e.target.value)}
+              placeholder={t('accounts.paymentPercentPlaceholder', 'Full payment')}
+            />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {t('accounts.paymentPercentHint', 'For revolving cards: the share of the balance you plan to pay each cycle. Leave empty to assume you pay in full.')}
+            </p>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
