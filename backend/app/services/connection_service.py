@@ -2406,7 +2406,8 @@ async def sync_connection(
                 # SimpleFIN reports card debt as negative under a "checking"
                 # label; once the user overrides the type to credit_card the
                 # downstream sites negate it, so store positive-for-debt to keep
-                # them provider-agnostic and avoid double-counting.
+                # them provider-agnostic and avoid double-counting. A loan reads
+                # the same way whatever the provider called the account.
                 account.balance = _provider_to_internal_balance(
                     connection.provider,
                     account.type,

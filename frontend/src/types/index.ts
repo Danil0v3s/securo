@@ -163,6 +163,8 @@ export interface SyncResult extends BankConnection {
   sync_outcome: 'refreshed' | 'rate_limited'
 }
 
+export type AccountType = 'checking' | 'savings' | 'credit_card' | 'loan' | 'investment' | 'wallet'
+
 export interface Account {
   id: string
   user_id: string
@@ -1728,7 +1730,7 @@ export interface ReconciliationConditions {
   /** Only pairs where one of the two legs sits on an account of this
    *  kind. Either leg is enough: a rule that exists to be careful about
    *  credit cards has to fire whichever end the card is on. */
-  account_types?: ('checking' | 'savings' | 'credit_card' | 'investment' | 'wallet')[]
+  account_types?: AccountType[]
   /** One side's statement text has to name the other side's account. The
    *  signal that tells two same-day transfers of the same amount apart,
    *  when one line reads "To FORTUNEO ACCOUNT" and the other does not. */
