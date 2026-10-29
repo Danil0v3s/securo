@@ -33,6 +33,8 @@ from app.models.user import User
 BASELINE_MONTHS = 12
 BASELINE_MIN_MONTHS = 3
 _TAIL_ANCHOR = 27
+# Debt accounts the Balance Flow leaves out: it tracks spendable cash.
+_NON_CASH_ACCOUNT_TYPES = ("loan", "credit_card")
 
 
 def _month_range(month: date) -> tuple[date, date]:
@@ -43,6 +45,41 @@ def _month_range(month: date) -> tuple[date, date]:
     else:
         month_end = month.replace(month=month.month + 1, day=1)
     return month_start, month_end
+
+
+def _cycle_start_day(user: Optional[User]) -> Optional[int]:
+    """Read the user's configured pay-cycle start day (1–28), or None.
+
+    None means the classic calendar-month behavior. Capped at 28 so the day
+    exists in every month (no Feb/short-month edge cases)."""
+    if user is None:
+        return None
+    day = (user.preferences or {}).get("pay_cycle_start_day")
+    if isinstance(day, bool):  # bool is an int subclass — reject True/False
+        return None
+    if isinstance(day, int) and 1 <= day <= 28:
+        return day
+    return None
+
+
+def _period_range(month: date, cycle_start_day: Optional[int]) -> tuple[date, date]:
+    """Return the [start, end) reporting window for a given ``month``.
+
+    Without a pay cycle this is just the calendar month. With a pay-cycle start
+    day D, the period *labeled* by calendar month M runs from day D of the
+    PREVIOUS month up to (but not including) day D of month M — i.e. the pay
+    cycle that funds month M. This lets an end-of-month paycheck fall inside the
+    month it actually pays for, instead of the prior calendar bucket.
+
+    End is exclusive, matching ``_month_range``."""
+    if not cycle_start_day:
+        return _month_range(month)
+    end = month.replace(day=cycle_start_day)
+    if month.month == 1:
+        start = month.replace(year=month.year - 1, month=12, day=cycle_start_day)
+    else:
+        start = month.replace(month=month.month - 1, day=cycle_start_day)
+    return start, end
 
 
 async def _materialized_recurring_occurrences(
@@ -257,8 +294,18 @@ async def get_summary(
     if not month:
         month = app_today().replace(day=1)
 
-    month_start, month_end = _month_range(month)
     today = app_today()
+
+    # Load the user up-front: needed both for the pay-cycle period window
+    # (below) and the reporting mode / primary currency further down.
+    user = await session.get(User, user_id)
+
+    # Pay-cycle period: when the user has configured a pay-cycle start day,
+    # the dashboard period runs payday→payday instead of 1st→last, so an
+    # end-of-month paycheck lands in the month it funds. Falls back to the
+    # calendar month when unset.
+    cycle_start_day = _cycle_start_day(user)
+    month_start, month_end = _period_range(month, cycle_start_day)
 
     # Collection filter (issue #105): show the *raw* P&L/balances of the
     # collection's accounts, plus the assets in its wallets (asset_group_ids);
@@ -274,7 +321,6 @@ async def get_summary(
     # aggregation queries bucket credit card transactions by the bill's due
     # date (effective_date) instead of the purchase date — gives a true
     # cash-flow view.
-    user = await session.get(User, user_id)
     accounting_mode = await get_credit_card_accounting_mode(session)
     report_date = reporting_date_col(accounting_mode)
 
@@ -674,6 +720,9 @@ async def get_summary(
         primary_currency=primary_currency,
         fx_fallback=fx_fallback,
         pending_shares_net=round(pending_shares_net, 2),
+        period_start=month_start.isoformat(),
+        period_end=(month_end - timedelta(days=1)).isoformat(),
+        pay_cycle_start_day=cycle_start_day,
     )
 
 
@@ -754,12 +803,12 @@ async def get_spending_by_category(
     if not month:
         month = app_today().replace(day=1)
 
-    month_start, month_end = _month_range(month)
+    user = await session.get(User, user_id)
+    month_start, month_end = _period_range(month, _cycle_start_day(user))
     today = app_today()
     filtered = account_ids is not None
     acct_filter = [Transaction.account_id.in_(account_ids)] if filtered else []
 
-    user = await session.get(User, user_id)
     accounting_mode = await get_credit_card_accounting_mode(session)
     primary_currency = user.primary_currency if user else get_settings().default_currency
     report_date = reporting_date_col(accounting_mode)
@@ -1103,15 +1152,18 @@ async def get_projected_transactions(
     if from_date and to_date:
         if from_date > to_date:
             raise ValueError("from_date must be before or equal to to_date")
+
+    # Get user's primary currency for live conversion (and the pay-cycle
+    # preference that shapes the month window below).
+    user = await session.get(User, user_id)
+    primary_currency = user.primary_currency if user else get_settings().default_currency
+
+    if from_date and to_date:
         range_start, range_end = from_date, to_date + timedelta(days=1)
     else:
         if not month:
             month = app_today().replace(day=1)
-        range_start, range_end = _month_range(month)
-
-    # Get user's primary currency for live conversion
-    user = await session.get(User, user_id)
-    primary_currency = user.primary_currency if user else get_settings().default_currency
+        range_start, range_end = _period_range(month, _cycle_start_day(user))
 
     stmt = (
         select(RecurringTransaction)
@@ -1527,6 +1579,7 @@ async def _daily_balance_deltas_by_date(
     include_pending: bool = False,
     exclude_opening_balance: bool = False,
     month_starts: Optional[list[date]] = None,
+    cycle_start_day: Optional[int] = None,
 ) -> dict[date, float]:
     """Get daily balance deltas for a date range [start, end), keyed by date.
 
@@ -1534,6 +1587,9 @@ async def _daily_balance_deltas_by_date(
     foreign txs within an account), grouped by date and account currency,
     then converts each currency to primary. This is consistent with
     ``_balance_at`` and avoids per-transaction FX conversion loops.
+
+    With ``month_starts``, each month contributes its reporting period: the
+    calendar month, or the payday→payday window when ``cycle_start_day`` is set.
     """
     effective = case(
         (Transaction.currency == Account.currency, Transaction.amount),
@@ -1551,10 +1607,13 @@ async def _daily_balance_deltas_by_date(
         [
             or_(*[
                 and_(
-                    Transaction.date >= month_start.replace(day=1),
-                    Transaction.date < _month_range(month_start)[1],
+                    Transaction.date >= window_start,
+                    Transaction.date < window_end,
                 )
-                for month_start in month_starts
+                for window_start, window_end in (
+                    _period_range(month_start.replace(day=1), cycle_start_day)
+                    for month_start in month_starts
+                )
             ])
         ]
         if month_starts is not None
@@ -1626,23 +1685,26 @@ def _baseline_from_deltas(
     month_starts: list[date],
     target_days: int,
     today: date,
+    cycle_start_day: Optional[int] = None,
 ) -> list[DailyBaseline]:
-    """Per-day median and P25/P75 of cumulative change across months with data."""
+    """Per-day median and P25/P75 of cumulative change across months with data.
+
+    Days are positions within each month's reporting period (the calendar
+    month, or payday→payday when ``cycle_start_day`` is set)."""
     by_day: dict[int, list[float]] = {}
     for month_start in month_starts:
-        month_start = month_start.replace(day=1)
-        month_end = _month_range(month_start)[1]
-        days = (month_end - month_start).days
-        if any(month_start <= d < month_end for d in deltas):
+        window_start, window_end = _period_range(month_start.replace(day=1), cycle_start_day)
+        days = (window_end - window_start).days
+        if any(window_start <= d < window_end for d in deltas):
             cumulative = []
             running = 0.0
-            for day in range(1, days + 1):
-                running += deltas.get(month_start.replace(day=day), 0.0)
+            for offset in range(days):
+                running += deltas.get(window_start + timedelta(days=offset), 0.0)
                 cumulative.append(running)
             for day in range(1, target_days + 1):
                 source_day = _source_day(day, target_days, days)
                 # Days after today have no data yet; don't carry the balance flat.
-                if month_start.replace(day=source_day) > today:
+                if window_start + timedelta(days=source_day - 1) > today:
                     continue
                 by_day.setdefault(day, []).append(cumulative[source_day - 1])
 
@@ -1665,6 +1727,14 @@ def _baseline_from_deltas(
             ),
         ))
     return baseline
+
+def _period_days(start: date, end: date):
+    """Yield every date in [start, end), in order."""
+    day = start
+    while day < end:
+        yield day
+        day += timedelta(days=1)
+
 
 def _source_day(day: int, target_days: int, source_days: int) -> int:
     """Map a day of the target month onto a source month of a different length.
@@ -1728,7 +1798,7 @@ async def get_balance_history_months(
         .where(
             Transaction.workspace_id == workspace_id,
             Account.is_closed == False,
-            Account.type != "loan",
+            Account.type.not_in(_NON_CASH_ACCOUNT_TYPES),
             Transaction.date <= app_today(),
             Transaction.status == "posted",
             Transaction.is_ignored == False,
@@ -1756,34 +1826,49 @@ async def get_balance_history(
     if not month:
         month = app_today().replace(day=1)
 
-    month_start, month_end = _month_range(month)
+    viewed_month = month.replace(day=1)
     selected_comparison_months = _normalize_comparison_months(
-        comparison_months, month_start
+        comparison_months, viewed_month
     )
 
-    today = app_today()
-    is_current = month_start.year == today.year and month_start.month == today.month
-    days_in_month = (month_end - month_start).days
-    cutoff_day = today.day if is_current else days_in_month
-
-    # Look up the user's primary currency once so the helpers can avoid
-    # re-querying.
+    # Look up the user once: primary currency (so the helpers can avoid
+    # re-querying) and the pay-cycle preference.
     user = await session.get(User, user_id)
     primary_currency = user.primary_currency if user else get_settings().default_currency
+    cycle_start_day = _cycle_start_day(user)
 
-    # Loans are long-term debt: they count in net worth, not in the money this
-    # curve tracks, so it leaves them out (like the sidebar accounts total).
-    loan_ids = set((await session.execute(
-        select(Account.id).where(Account.workspace_id == workspace_id, Account.type == "loan")
+    # The period runs payday→payday when a pay cycle is set, else the calendar
+    # month. Points are indexed 1..N by position in the period (the day of the
+    # month without a cycle) and carry their real date, so a period spanning two
+    # calendar months stays contiguous and drilldowns know which day was hit.
+    month_start, month_end = _period_range(viewed_month, cycle_start_day)
+
+    today = app_today()
+    is_current = month_start <= today < month_end
+    days_in_month = (month_end - month_start).days
+    cutoff_day = (today - month_start).days + 1 if is_current else days_in_month
+
+    # Loans and credit cards are debt: they count in net worth, not in the
+    # spendable cash this curve tracks, so it leaves them out (like the sidebar
+    # accounts total). A card carrying a balance would otherwise drag the line
+    # underwater while the checking account is funded.
+    excluded_ids = set((await session.execute(
+        select(Account.id).where(
+            Account.workspace_id == workspace_id,
+            Account.type.in_(_NON_CASH_ACCOUNT_TYPES),
+        )
     )).scalars())
     balance_account_ids = account_ids
-    if loan_ids:
+    if excluded_ids:
         if account_ids is None:
             balance_account_ids = list((await session.execute(
-                select(Account.id).where(Account.workspace_id == workspace_id, Account.type != "loan")
+                select(Account.id).where(
+                    Account.workspace_id == workspace_id,
+                    Account.type.not_in(_NON_CASH_ACCOUNT_TYPES),
+                )
             )).scalars())
         else:
-            balance_account_ids = [i for i in account_ids if i not in loan_ids]
+            balance_account_ids = [i for i in account_ids if i not in excluded_ids]
 
     # Starting balances
     current_start = await _balance_at(
@@ -1791,8 +1876,8 @@ async def get_balance_history(
         primary_currency_hint=primary_currency, account_ids=balance_account_ids,
     )
 
-    # Daily deltas from real transactions
-    current_deltas = await _daily_deltas(
+    # Daily deltas from real transactions, keyed by date
+    current_deltas = await _daily_balance_deltas_by_date(
         session, workspace_id, month_start, month_end,
         primary_currency_hint=primary_currency, account_ids=balance_account_ids,
         exclude_opening_balance=True,
@@ -1804,7 +1889,7 @@ async def get_balance_history(
     baseline: list[DailyBaseline] = []
     if len(selected_comparison_months) == 1:
         comparison_month = selected_comparison_months[0]
-        comparison_start, comparison_end = _month_range(comparison_month)
+        comparison_start, comparison_end = _period_range(comparison_month, cycle_start_day)
         comparison_opening_balance = await _balance_at(
             session,
             workspace_id,
@@ -1812,7 +1897,7 @@ async def get_balance_history(
             primary_currency_hint=primary_currency,
             account_ids=balance_account_ids,
         )
-        comparison_deltas = await _daily_deltas(
+        comparison_deltas = await _daily_balance_deltas_by_date(
             session,
             workspace_id,
             comparison_start,
@@ -1824,31 +1909,33 @@ async def get_balance_history(
         if comparison_deltas:
             comparison = []
             comparison_balance = comparison_opening_balance
-            comparison_days = (comparison_end - comparison_start).days
-            for day in range(1, comparison_days + 1):
-                comparison_balance += comparison_deltas.get(day, 0.0)
-                is_future = comparison_start.replace(day=day) > today
+            for position, day_date in enumerate(_period_days(comparison_start, comparison_end), start=1):
+                comparison_balance += comparison_deltas.get(day_date, 0.0)
+                is_future = day_date > today
                 comparison.append(DailyBalance(
-                    day=day,
+                    day=position,
+                    date=day_date.isoformat(),
                     balance=None if is_future else round(comparison_balance, 2),
                 ))
     else:
         baseline_deltas = await _daily_balance_deltas_by_date(
             session,
             workspace_id,
-            selected_comparison_months[0],
-            _month_range(selected_comparison_months[-1])[1],
+            _period_range(selected_comparison_months[0], cycle_start_day)[0],
+            _period_range(selected_comparison_months[-1], cycle_start_day)[1],
             primary_currency_hint=primary_currency,
             account_ids=balance_account_ids,
             exclude_opening_balance=True,
             month_starts=selected_comparison_months,
+            cycle_start_day=cycle_start_day,
         )
         baseline = _baseline_from_deltas(
-            baseline_deltas, selected_comparison_months, days_in_month, today
+            baseline_deltas, selected_comparison_months, days_in_month, today,
+            cycle_start_day=cycle_start_day,
         )
 
-    # Recurring projections for future days of current month (converted to primary currency)
-    proj_deltas: dict[int, float] = {}
+    # Recurring projections for future days of the current period (converted to primary currency)
+    proj_deltas: dict[date, float] = {}
     if month_end > today:
         # A future month's chart starts from the posted-only current balance.
         # Carry forecast rows dated before that month into its projected
@@ -1888,30 +1975,31 @@ async def get_balance_history(
                 tx.account.currency if tx.account else tx.currency,
                 primary_currency,
             )
-            proj_deltas[tx.date.day] = proj_deltas.get(tx.date.day, 0) + float(converted)
+            proj_deltas[tx.date] = proj_deltas.get(tx.date, 0) + float(converted)
 
         projections = await _get_recurring_projections(
             session, workspace_id, proj_start, month_end, account_ids
         )
         for proj in projections:
-            if proj["account_id"] in loan_ids:
+            if proj["account_id"] in excluded_ids:
                 continue
-            day = proj["date"].day
+            proj_date = proj["date"]
             proj_converted, _ = await convert(
                 session, Decimal(str(proj["amount"])), proj["currency"], primary_currency,
             )
             amount = float(proj_converted)
             signed = amount if proj["type"] == "credit" else -amount
-            proj_deltas[day] = proj_deltas.get(day, 0) + signed
+            proj_deltas[proj_date] = proj_deltas.get(proj_date, 0) + signed
 
-    # Build current month daily balances
+    # Build the current period's daily balances, one point per day in order
     current_daily = []
     balance = current_start
-    for day in range(1, days_in_month + 1):
-        balance += current_deltas.get(day, 0) + proj_deltas.get(day, 0)
+    for position, day_date in enumerate(_period_days(month_start, month_end), start=1):
+        balance += current_deltas.get(day_date, 0) + proj_deltas.get(day_date, 0)
         current_daily.append(DailyBalance(
-            day=day,
-            balance=round(balance, 2) if day <= cutoff_day else None,
+            day=position,
+            date=day_date.isoformat(),
+            balance=round(balance, 2) if position <= cutoff_day else None,
         ))
 
     return BalanceHistory(

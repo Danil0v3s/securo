@@ -87,6 +87,10 @@ export interface UserPreferences {
   currency_display?: string
   display_name?: string
   onboarding_completed?: boolean
+  // Day of month (1–28) the pay cycle starts. When set, the dashboard's
+  // period runs payday→payday instead of 1st→last, so an end-of-month
+  // paycheck falls in the month it funds. null/absent = calendar month.
+  pay_cycle_start_day?: number | null
 }
 
 export interface Category {
@@ -792,6 +796,11 @@ export interface DashboardSummary {
   // Negative = net liability, positive = net receivable. Already
   // accounts for partial settlements.
   pending_shares_net: number
+  // Reporting-period window actually used (ISO dates, inclusive end).
+  // Equals the calendar month unless a pay cycle is configured.
+  period_start?: string | null
+  period_end?: string | null
+  pay_cycle_start_day?: number | null
 }
 
 export interface SpendingByCategory {
@@ -811,7 +820,8 @@ export interface MonthlyTrend {
 }
 
 export interface DailyBalance {
-  day: number
+  day: number // 1-based position within the period (day of month without a pay cycle)
+  date?: string | null // ISO date of this point; used for drilldowns
   balance: number | null
 }
 

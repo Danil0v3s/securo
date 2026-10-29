@@ -6,6 +6,7 @@ import {
   monthLabel,
   monthLastDay,
   monthRange,
+  periodRange,
   shiftMonth,
 } from '@/lib/month-utils'
 
@@ -79,6 +80,25 @@ describe('monthRange', () => {
     const { from, to } = monthRange('2026-06')
     expect(from).not.toMatch(/T/)
     expect(to).not.toMatch(/T/)
+  })
+})
+
+describe('periodRange', () => {
+  it('is the calendar month without a pay cycle', () => {
+    expect(periodRange('2026-06')).toEqual(monthRange('2026-06'))
+    expect(periodRange('2026-06', null)).toEqual(monthRange('2026-06'))
+  })
+
+  it('runs payday to the day before the next payday', () => {
+    expect(periodRange('2026-11', 25)).toEqual({ from: '2026-10-25', to: '2026-11-24' })
+  })
+
+  it('starts January in the previous December', () => {
+    expect(periodRange('2027-01', 25)).toEqual({ from: '2026-12-25', to: '2027-01-24' })
+  })
+
+  it('ends on the last day of the previous month when the cycle starts on the 1st', () => {
+    expect(periodRange('2026-03', 1)).toEqual({ from: '2026-02-01', to: '2026-02-28' })
   })
 })
 

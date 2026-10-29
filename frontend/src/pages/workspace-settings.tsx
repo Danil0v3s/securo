@@ -38,12 +38,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { AlertTriangle, Archive, Plus, Save, Trash2, Users } from 'lucide-react'
+import { AlertTriangle, Archive, CalendarClock, Plus, Save, Trash2, Users } from 'lucide-react'
 import { WORKSPACE_KIND_LABEL_KEY } from '@/lib/workspace-kinds'
 import { SUPPORTED_LANGS } from '@/lib/i18n'
 import { countryFlag } from '@/lib/country-flag'
 import { countryName } from '@/lib/country-name'
-import type { WorkspaceKind, WorkspaceMember, WorkspaceRole } from '@/types'
+import type { UserPreferences, WorkspaceKind, WorkspaceMember, WorkspaceRole } from '@/types'
 
 function labelForRole(role: WorkspaceRole, t: (key: string) => string): string {
   return {
@@ -115,6 +115,15 @@ export default function WorkspaceSettingsPage() {
     }
   }
 
+  // Personal pay-cycle preference: '' = calendar month, else day 1–28.
+  const savedPayCycleDay = currentUser?.preferences?.pay_cycle_start_day
+  const [payCycleDay, setPayCycleDay] = useState(savedPayCycleDay != null ? String(savedPayCycleDay) : '')
+  const [previousPayCycleDay, setPreviousPayCycleDay] = useState(savedPayCycleDay)
+  if (savedPayCycleDay !== previousPayCycleDay) {
+    setPreviousPayCycleDay(savedPayCycleDay)
+    setPayCycleDay(savedPayCycleDay != null ? String(savedPayCycleDay) : '')
+  }
+
   // Which jurisdictions ship a pack. An empty choice is valid, not missing:
   // with none set, documents are stored as free text with no mask.
   const { data: jurisdictions } = useQuery({
@@ -179,6 +188,37 @@ export default function WorkspaceSettingsPage() {
       // dependent queries.
       void authApi.me().then(updateUser).catch(() => {})
       void queryClient.invalidateQueries()
+    },
+    onError: (e: unknown) => {
+      const detail =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        (e instanceof Error ? e.message : t('workspace.saveError'))
+      toast.error(detail)
+    },
+  })
+
+  const payCycleMutation = useMutation({
+    mutationFn: () => {
+      const raw = payCycleDay.trim()
+      let day: number | null = null
+      if (raw !== '') {
+        const n = Math.round(Number(raw))
+        if (!Number.isFinite(n) || n < 1 || n > 28) {
+          throw new Error(t('settings.payCycleInvalid', 'Enter a day between 1 and 28, or leave empty.'))
+        }
+        day = n
+      }
+      const preferences = {
+        ...(currentUser?.preferences ?? {}),
+        pay_cycle_start_day: day,
+      } as UserPreferences
+      return authApi.updateMe({ preferences })
+    },
+    onSuccess: (updated) => {
+      updateUser(updated)
+      toast.success(t('workspace.saveSuccess'))
+      // Dashboard period + balances depend on this preference.
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
     onError: (e: unknown) => {
       const detail =
@@ -502,6 +542,47 @@ export default function WorkspaceSettingsPage() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Pay cycle card — personal preference */}
+      <section className="space-y-4 rounded-xl border bg-card p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold">{t('settings.payCycleTitle', 'Pay cycle')}</h2>
+          </div>
+          <Button
+            onClick={() => payCycleMutation.mutate()}
+            disabled={payCycleMutation.isPending}
+            className="rounded-lg"
+            size="sm"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {payCycleMutation.isPending ? t('common.loading') : t('common.save')}
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {t(
+            'settings.payCycleHint',
+            'If you get paid near the end of the month, set the day your pay cycle starts (1–28). The dashboard period and its income/expenses then run payday→payday instead of 1st→last, so an end-of-month paycheck falls in the month it funds. Leave empty to use calendar months.',
+          )}
+        </p>
+        <div className="space-y-1.5 max-w-[240px]">
+          <Label htmlFor="pay-cycle-day" className="text-[13px]">
+            {t('settings.payCycleDay', 'Cycle start day')}
+          </Label>
+          <Input
+            id="pay-cycle-day"
+            type="number"
+            min={1}
+            max={28}
+            inputMode="numeric"
+            value={payCycleDay}
+            onChange={(e) => setPayCycleDay(e.target.value)}
+            placeholder={t('settings.payCyclePlaceholder', 'Calendar month')}
+            className="h-10 rounded-lg w-full"
+          />
         </div>
       </section>
 

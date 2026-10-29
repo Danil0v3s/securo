@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { getAccountLabel, getAccountName, sortAccountsByAbsoluteBalance, sumAccountBalances } from '@/lib/account-utils'
-import { currentMonth, shiftMonth, monthLastDay, monthLabel, monthRange } from '@/lib/month-utils'
+import { currentMonth, shiftMonth, monthLabel, monthRange, periodRange } from '@/lib/month-utils'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -189,8 +189,15 @@ export default function DashboardPage() {
   const [comparisonPickerOpen, setComparisonPickerOpen] = useState(false)
   const [hoveredDay, setHoveredDay] = useState<number | null>(null)
   const dateFnsLocale = resolveDateFnsLocale(i18n.resolvedLanguage ?? i18n.language)
-  const { from: monthStart, to: monthEnd } = monthRange(selectedMonth)
+  // monthStart is the first of the calendar month — the `month` param the
+  // backend expects, then expands into the pay-cycle period server-side.
+  const { from: monthStart } = monthRange(selectedMonth)
   const monthParam = monthStart
+  // Pay-cycle period (payday→payday) when the user has a cycle configured; else
+  // the calendar month. Drives every dashboard card so they stay consistent.
+  const cycleStartDay = user?.preferences?.pay_cycle_start_day ?? null
+  const cycleActive = cycleStartDay != null
+  const { from: periodFrom, to: periodTo } = periodRange(selectedMonth, cycleStartDay)
   const uiLocale = i18n.resolvedLanguage ?? i18n.language
   const monthLabelStr = monthLabel(selectedMonth, uiLocale)
 
@@ -296,10 +303,10 @@ export default function DashboardPage() {
   })
 
   const { data: currentMonthTxs, isLoading: currentTxLoading } = useQuery({
-    queryKey: ['transactions', 'cumulative', selectedMonth, activeAccountIds],
+    queryKey: ['transactions', 'cumulative', periodFrom, periodTo, activeAccountIds],
     queryFn: () => transactions.list({
-      from: monthStart,
-      to: monthEnd,
+      from: periodFrom,
+      to: periodTo,
       limit: 500,
       exclude_transfers: true,
       account_ids: acctIds,
@@ -452,18 +459,21 @@ export default function DashboardPage() {
 
   const cumulativeData = useMemo(() => {
     if (!balanceHistory) return []
-    const daysInMonth = monthLastDay(selectedMonth)
     const opening = balanceHistory.opening_balance
     const result: {
       day: number
+      date: string | null
       current: number | null
       comparison: number | null
       median: number | null
       band: [number, number] | null
     }[] = []
     let lastComparison: number | null = null
-    for (let day = 1; day <= daysInMonth; day++) {
-      const cur = balanceHistory.current.find(d => d.day === day)
+    // Points are indexed 1..N by position in the period (payday→payday or the
+    // calendar month), so walk the current series and align the comparison and
+    // baseline by the same index. Each point carries its real date.
+    for (const cur of balanceHistory.current) {
+      const day = cur.day
       const comparisonPoint = balanceHistory.comparison?.find(d => d.day === day)
       if (comparisonPoint?.balance != null && balanceHistory.comparison_opening_balance != null) {
         lastComparison = comparisonPoint.balance - balanceHistory.comparison_opening_balance
@@ -475,14 +485,15 @@ export default function DashboardPage() {
       const hasBand = base?.lower_quartile != null && base?.upper_quartile != null
       result.push({
         day,
-        current: cur?.balance != null ? cur.balance - opening : null,
+        date: cur.date ?? null,
+        current: cur.balance != null ? cur.balance - opening : null,
         comparison: lastComparison,
         median: base?.median ?? null,
         band: hasBand ? [base!.lower_quartile!, base!.upper_quartile!] : null,
       })
     }
     return result
-  }, [balanceHistory, selectedMonth])
+  }, [balanceHistory])
 
   const lastCurrentPoint = [...cumulativeData].reverse().find(d => d.current !== null)
   const lastDay = lastCurrentPoint?.day ?? 0
@@ -529,6 +540,23 @@ export default function DashboardPage() {
     .filter((a) => (activeAccountIds ? activeAccountIds.includes(a.id) : true) && a.type !== 'credit_card' && a.type !== 'loan')
     .reduce((sum, a) => sum + Number(a.balance_primary ?? a.current_balance), 0)
 
+  // Revolving-card plan: for cards with a payment_percent set, the near-term
+  // cash impact is percent × owed (not the full balance). Sum across cards.
+  const cardPaymentPlan = useMemo(() => {
+    const cards = (accountsList ?? []).filter(
+      (a) => (activeAccountIds ? activeAccountIds.includes(a.id) : true)
+        && a.type === 'credit_card' && a.payment_percent != null,
+    )
+    if (cards.length === 0) return null
+    let payment = 0
+    for (const c of cards) {
+      const owed = Math.abs(Number(c.balance_primary ?? c.current_balance))
+      payment += owed * (Number(c.payment_percent) / 100)
+    }
+    const percentLabel = cards.length === 1 ? `${cards[0].payment_percent}%` : null
+    return { payment, percentLabel }
+  }, [accountsList, activeAccountIds])
+
   // Savings rate & projection
   const income = Number(summary?.monthly_income_primary ?? summary?.monthly_income ?? 0)
   const expenses = Number(summary?.monthly_expenses_primary ?? summary?.monthly_expenses ?? 0)
@@ -538,11 +566,17 @@ export default function DashboardPage() {
   const projectedIncome = Number(summary?.projected_income_primary ?? summary?.projected_income ?? income)
   const projectedExpenses = Number(summary?.projected_expenses_primary ?? summary?.projected_expenses ?? expenses)
   const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0
-  const isCurrentMonth = selectedMonth === currentMonth()
-  const daysElapsed = isCurrentMonth ? new Date().getDate() : monthLastDay(selectedMonth)
-  const daysInMonth = monthLastDay(selectedMonth)
-  const projectedSpend = expenses > 0 && isCurrentMonth && daysElapsed > 0
-    ? (expenses / daysElapsed) * daysInMonth
+  // Spend projection scales to the *period* (payday→payday or calendar month).
+  const periodStartDate = new Date(periodFrom + 'T00:00:00')
+  const periodEndDate = new Date(periodTo + 'T00:00:00')
+  const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0)
+  const periodLength = Math.round((periodEndDate.getTime() - periodStartDate.getTime()) / 86400000) + 1
+  const isCurrentPeriod = todayMidnight >= periodStartDate && todayMidnight <= periodEndDate
+  const daysElapsed = isCurrentPeriod
+    ? Math.round((todayMidnight.getTime() - periodStartDate.getTime()) / 86400000) + 1
+    : periodLength
+  const projectedSpend = expenses > 0 && isCurrentPeriod && daysElapsed > 0
+    ? (expenses / daysElapsed) * periodLength
     : null
 
   // Uncategorized data
@@ -792,6 +826,32 @@ export default function DashboardPage() {
                   <span>{t('transactions.fxFallbackBanner')}</span>
                 </p>
               )}
+              {/* Credit-card owed: shown beside the headline rather than netted
+                  into it. creditCardBalance is negative when owed. */}
+              {Math.abs(creditCardBalance) >= 0.01 && (
+                <p className="text-xs tabular-nums mt-1 text-muted-foreground">
+                  {t('dashboard.creditCardOwed', 'Credit card')}:{' '}
+                  <span className="text-rose-500">
+                    −{mask(formatCurrency(Math.abs(creditCardBalance), primaryCurrency, locale))}
+                  </span>
+                </p>
+              )}
+              {/* Revolving payment plan: what you'll actually pay this cycle
+                  (percent × owed), the resulting cash, and what keeps revolving. */}
+              {Math.abs(creditCardBalance) >= 0.01 && cardPaymentPlan && (
+                <p className="text-xs tabular-nums mt-0.5 text-muted-foreground">
+                  {t('dashboard.cardPaymentLabel', 'Paying')}
+                  {cardPaymentPlan.percentLabel ? ` ${cardPaymentPlan.percentLabel}` : ''}
+                  {' ≈ '}
+                  {mask(formatCurrency(cardPaymentPlan.payment, primaryCurrency, locale))}
+                  {' · '}
+                  {t('dashboard.cardCashAfter', 'cash after')}{' '}
+                  {mask(formatCurrency(availableBalance - cardPaymentPlan.payment, primaryCurrency, locale))}
+                  {' · '}
+                  {t('dashboard.cardOwedAfter', 'owed after')}{' '}
+                  {mask(formatCurrency(Math.max(0, Math.abs(creditCardBalance) - cardPaymentPlan.payment), primaryCurrency, locale))}
+                </p>
+              )}
               {sortedAvailableBalanceAccounts.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {sortedAvailableBalanceAccounts.map((acc) => {
@@ -857,8 +917,8 @@ export default function DashboardPage() {
             onClick={() => setDrillDown({
               title: t('dashboard.drillDownIncome', { month: monthLabelStr }),
               type: 'credit',
-              from: monthStart,
-              to: monthEnd,
+              from: periodFrom,
+              to: periodTo,
             })}
           >
             <p className="text-xs font-medium text-muted-foreground mb-1 min-h-[16px] flex items-center">{t('dashboard.monthlyIncome')}</p>
@@ -885,8 +945,8 @@ export default function DashboardPage() {
             onClick={() => setDrillDown({
               title: t('dashboard.drillDownExpenses', { month: monthLabelStr }),
               type: 'debit',
-              from: monthStart,
-              to: monthEnd,
+              from: periodFrom,
+              to: periodTo,
             })}
           >
             <p className="text-xs font-medium text-muted-foreground mb-1 min-h-[16px] flex items-center">{t('dashboard.monthlyExpenses')}</p>
@@ -991,6 +1051,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Pay-cycle window caption — clarifies that income/expenses above
+            cover payday→payday, not the calendar month. */}
+        {cycleActive && !summaryLoading && summary?.period_start && summary?.period_end && (
+          <p className="text-xs text-muted-foreground mt-3">
+            {t('dashboard.payCyclePeriod', 'Pay cycle')}: {formatDate(summary.period_start, dateLocale)} – {formatDate(summary.period_end, dateLocale)}
+          </p>
+        )}
+
         {/* Spending projection */}
         {projectedSpend !== null && !summaryLoading && (
           <p className="text-xs text-muted-foreground mt-3">
@@ -1075,8 +1143,8 @@ export default function DashboardPage() {
                         title: t('dashboard.drillDownCategory', { category: item.category_name, month: monthLabelStr }),
                         category_id: item.category_id,
                         type: 'debit',
-                        from: monthStart,
-                        to: monthEnd,
+                        from: periodFrom,
+                        to: periodTo,
                       })}
                     >
                       <div className="flex items-center gap-3">
@@ -1183,7 +1251,7 @@ export default function DashboardPage() {
                   </Popover>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {new Date(`${selectedMonth}-01T00:00:00`).toLocaleDateString(dateLocale)} → {new Date(`${selectedMonth}-${String(lastCurrentPoint?.day ?? monthLastDay(selectedMonth)).padStart(2, '0')}T00:00:00`).toLocaleDateString(dateLocale)}
+                  {new Date(periodFrom + 'T00:00:00').toLocaleDateString(dateLocale)} → {new Date((lastCurrentPoint?.date ?? periodTo) + 'T00:00:00').toLocaleDateString(dateLocale)}
                 </p>
               </div>
               {!balanceHistoryLoading && lastCurrentPoint && (
@@ -1240,11 +1308,10 @@ export default function DashboardPage() {
                   onMouseLeave={() => setHoveredDay(null)}
                   onClick={(_state) => {
                     // Access activePayload from the underlying native event target chart state
-                    const chartState = _state as unknown as { activePayload?: Array<{ payload: { day: number } }> }
+                    const chartState = _state as unknown as { activePayload?: Array<{ payload: { date: string | null } }> }
                     const payload = chartState?.activePayload ?? []
-                    if (payload[0]) {
-                      const day = String(payload[0].payload.day).padStart(2, '0')
-                      const dateStr = `${selectedMonth}-${day}`
+                    const dateStr = payload[0]?.payload.date
+                    if (dateStr) {
                       setDrillDown({
                         title: t('dashboard.drillDownDay', { date: new Date(dateStr + 'T00:00:00').toLocaleDateString(dateLocale) }),
                         from: dateStr,
@@ -1300,7 +1367,12 @@ export default function DashboardPage() {
                         name === 'current' ? monthLabel(selectedMonth, uiLocale).split(' ')[0] : t('dashboard.balanceMedianLegend'),
                       ]
                     }}
-                    labelFormatter={(day) => t('dashboard.day', { day })}
+                    labelFormatter={(day) => {
+                      const point = cumulativeData.find(d => d.day === day)
+                      return point?.date
+                        ? new Date(point.date + 'T00:00:00').toLocaleDateString(dateLocale)
+                        : t('dashboard.day', { day })
+                    }}
                     contentStyle={{
                       background: 'var(--card)',
                       color: 'var(--foreground)',

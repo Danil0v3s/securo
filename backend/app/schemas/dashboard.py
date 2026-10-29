@@ -35,6 +35,12 @@ class DashboardSummary(BaseModel):
     # waiting to be paid back). Computed from group balance lines so
     # it already accounts for any partial settlements.
     pending_shares_net: float = 0.0
+    # Reporting-period window actually used (ISO dates, inclusive end). Equals
+    # the calendar month unless a pay cycle is configured, in which case it runs
+    # payday→payday. ``pay_cycle_start_day`` is null when unset (calendar month).
+    period_start: Optional[str] = None
+    period_end: Optional[str] = None
+    pay_cycle_start_day: Optional[int] = None
 
 
 class SpendingByCategory(BaseModel):
@@ -56,7 +62,8 @@ class MonthlyTrend(BaseModel):
 
 
 class DailyBalance(BaseModel):
-    day: int
+    day: int  # 1-based position within the period (day-of-month without a pay cycle)
+    date: Optional[str] = None  # ISO date of this point; used for drilldowns
     balance: Optional[float]  # None for future days beyond cutoff
 
 

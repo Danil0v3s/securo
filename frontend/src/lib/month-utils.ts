@@ -33,6 +33,23 @@ export function monthRange(yearMonth: string): { from: string; to: string } {
   }
 }
 
+/**
+ * Day range for a reporting period. Without a pay-cycle day this is the
+ * calendar month (delegates to `monthRange`). With a cycle start day D, the
+ * period labeled by month M runs from day D of the previous month through day
+ * D-1 of month M (payday→payday), mirroring the backend `_period_range`.
+ * `to` is inclusive, like `monthRange`.
+ */
+export function periodRange(yearMonth: string, cycleStartDay?: number | null): { from: string; to: string } {
+  if (!cycleStartDay) return monthRange(yearMonth)
+  const [y, m] = yearMonth.split('-').map(Number)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  const start = new Date(y, m - 2, cycleStartDay) // day D of month M-1
+  const endIncl = new Date(y, m - 1, cycleStartDay - 1) // day D-1 of month M (inclusive)
+  return { from: fmt(start), to: fmt(endIncl) }
+}
+
 /** Localized label for a `"YYYY-MM"` month, e.g. "Maio de 2026" / "May 2026". */
 export function monthLabel(yearMonth: string, locale = 'pt-BR'): string {
   const [y, m] = yearMonth.split('-').map(Number)

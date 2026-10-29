@@ -67,13 +67,16 @@ export function sidebarAccountBalance(
 }
 
 /**
- * The accounts total the sidebar shows. Loans are long-term debt that the
- * net worth already counts, so they stay out of this money-on-hand total.
+ * The accounts total the sidebar shows. Loans and credit cards are debt that
+ * the net worth already counts, so they stay out of this money-on-hand total;
+ * card debt still shows on its own per-account row.
  */
 export function sumAccountsTotal(
   accounts: readonly Pick<Account, 'type' | 'balance_primary' | 'current_balance' | 'shared_balance_group'>[],
 ): number {
-  return sumAccountBalances(accounts.filter((account) => account.type !== 'loan'))
+  return sumAccountBalances(
+    accounts.filter((account) => account.type !== 'loan' && account.type !== 'credit_card'),
+  )
 }
 
 /**

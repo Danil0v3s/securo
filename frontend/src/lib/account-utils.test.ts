@@ -86,14 +86,14 @@ describe('sortAccountsByAbsoluteBalance', () => {
 })
 
 describe('sumAccountsTotal', () => {
-  it('leaves loans out of the accounts total', () => {
+  it('leaves loans and credit cards out of the accounts total', () => {
     const accounts = [
       { type: 'checking', current_balance: 4000, balance_primary: null, shared_balance_group: null },
       { type: 'credit_card', current_balance: -500, balance_primary: null, shared_balance_group: null },
       { type: 'loan', current_balance: -200000, balance_primary: null, shared_balance_group: null },
     ]
 
-    expect(sumAccountsTotal(accounts)).toBe(3500)
+    expect(sumAccountsTotal(accounts)).toBe(4000)
   })
 })
 
