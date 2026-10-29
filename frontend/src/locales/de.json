@@ -2784,7 +2784,9 @@
         "unlink_transfer": "Überweisung trennen",
         "update_goal": "Ziel aktualisieren",
         "update_budget": "Budget aktualisieren",
-        "delete_budget": "Budget löschen"
+        "delete_budget": "Budget löschen",
+        "update_transaction_notes": "Notizen der Transaktion bearbeiten",
+        "create_category_group": "Kategoriegruppe erstellen"
       },
       "summary": {
         "categorize": "{{count}} Transaktion(en) → {{category}}",
@@ -2802,7 +2804,9 @@
         "updateGoal": "{{name}} → {{changes}}",
         "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
         "deleteBudget": "{{category}}: {{amount}} für {{month}}",
-        "deleteRecurringBudget": "{{category}}: {{amount}} monatlich ab {{month}}"
+        "deleteRecurringBudget": "{{category}}: {{amount}} monatlich ab {{month}}",
+        "updateTransactionNotes": "{{description}}: {{before}} → {{after}}",
+        "createCategoryGroup": "“{{name}}”"
       }
     },
     "conversation": {

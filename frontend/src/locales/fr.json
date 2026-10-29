@@ -2787,7 +2787,9 @@
         "unlink_transfer": "Délier le virement",
         "update_goal": "Mettre à jour un objectif",
         "update_budget": "Mettre à jour un budget",
-        "delete_budget": "Supprimer un budget"
+        "delete_budget": "Supprimer un budget",
+        "update_transaction_notes": "Modifier les notes de la transaction",
+        "create_category_group": "Créer un groupe de catégories"
       },
       "summary": {
         "categorize": "{{count}} transaction(s) → {{category}}",
@@ -2805,7 +2807,9 @@
         "updateGoal": "{{name}} → {{changes}}",
         "updateBudget": "{{category}} ({{month}}) : {{before}} → {{after}}",
         "deleteBudget": "{{category}} : {{amount}} pour {{month}}",
-        "deleteRecurringBudget": "{{category}} : {{amount}} chaque mois à partir de {{month}}"
+        "deleteRecurringBudget": "{{category}} : {{amount}} chaque mois à partir de {{month}}",
+        "updateTransactionNotes": "{{description}}: {{before}} → {{after}}",
+        "createCategoryGroup": "« {{name}} »"
       }
     },
     "conversation": {

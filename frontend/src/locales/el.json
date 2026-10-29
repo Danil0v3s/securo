@@ -2783,7 +2783,9 @@
         "unlink_transfer": "Αποσύνδεση μεταφοράς",
         "update_goal": "Ενημέρωση στόχου",
         "update_budget": "Ενημέρωση προϋπολογισμού",
-        "delete_budget": "Διαγραφή προϋπολογισμού"
+        "delete_budget": "Διαγραφή προϋπολογισμού",
+        "update_transaction_notes": "Επεξεργασία σημειώσεων συναλλαγής",
+        "create_category_group": "Δημιουργία ομάδας κατηγοριών"
       },
       "summary": {
         "categorize": "{{count}} συναλλαγή(ές) → {{category}}",
@@ -2801,7 +2803,9 @@
         "updateGoal": "{{name}} → {{changes}}",
         "updateBudget": "{{category}} ({{month}}): {{before}} → {{after}}",
         "deleteBudget": "{{category}}: {{amount}} για {{month}}",
-        "deleteRecurringBudget": "{{category}}: {{amount}} κάθε μήνα από {{month}}"
+        "deleteRecurringBudget": "{{category}}: {{amount}} κάθε μήνα από {{month}}",
+        "updateTransactionNotes": "{{description}}: {{before}} → {{after}}",
+        "createCategoryGroup": "«{{name}}»"
       }
     },
     "conversation": {
