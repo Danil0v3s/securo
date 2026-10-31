@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import re
 import time
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
@@ -220,6 +221,40 @@ def _txn_fingerprint(account_uid: str, raw: dict) -> str:
     ]
     digest = hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
     return digest[:32]
+
+
+# ActivoBank card entries carry a reference of the form
+# "<15-digit id> <statement and position>", e.g.
+# "126092121481206 00020VIS4544962833527000126080100026" once on a statement,
+# or "126102021341101" padded with spaces then "00002" while the period is open.
+# The leading id (1 + YYMMDDHHMMSS + a counter) is the entry's own; the tail is
+# the statement it sits on plus its position in the list, which shifts with
+# every new entry and statement. Keying on the whole reference re-imported the
+# same purchase on every sync that moved it.
+_POSITIONAL_REFERENCE = re.compile(r"^(\d{15})\s+(?:\d{5}[A-Z]{3}\d+)?\d{5}$")
+
+
+def _entry_identity(account_uid: str, raw: dict) -> tuple[str, bool]:
+    """Resolve ``(external_id, provisional)`` for an EB transaction.
+
+    ``provisional`` is True for an entry the bank hasn't given its own id yet
+    (ActivoBank sends ``000000000000001`` for those). It is keyed on what
+    stays fixed until the real id arrives, and should be imported as pending
+    so the sync's pending↔posted matcher folds it into the settled entry.
+    """
+    entry_ref = (raw.get("entry_reference") or "").strip()
+    match = _POSITIONAL_REFERENCE.match(entry_ref)
+    if match:
+        lead = match.group(1)
+        if len(lead.lstrip("0")) > 2:
+            return lead, False
+        # Placeholder id: the booking date also moves day to day, so leave it
+        # (and value_date) out of the fingerprint.
+        steady = {**raw, "booking_date": None, "value_date": None}
+        return _txn_fingerprint(account_uid, steady), True
+    if entry_ref and entry_ref != "0":
+        return entry_ref, False
+    return _txn_fingerprint(account_uid, raw), False
 
 
 def _extract_payee(raw: dict, indicator: str, source: str) -> Optional[str]:
@@ -799,10 +834,9 @@ class EnableBankingProvider(BankProvider):
             else:
                 description = debtor or creditor or ""
         description = description.strip()[:500] or "Transaction"
-        entry_ref = (raw.get("entry_reference") or "").strip()
-        external_id = (
-            entry_ref if entry_ref and entry_ref != "0" else _txn_fingerprint(account_uid, raw)
-        )
+        external_id, provisional = _entry_identity(account_uid, raw)
+        if provisional:
+            status = "pending"
         return TransactionData(
             external_id=external_id,
             description=description,

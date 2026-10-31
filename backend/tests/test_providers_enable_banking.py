@@ -188,6 +188,73 @@ def test_build_transaction_falls_back_to_booking_then_value():
     assert provider._build_transaction("a", value_only, "posted", "auto").date == date(2026, 7, 30)
 
 
+# ----- stable ids for positional references (issue: ActivoBank card duplicates) -----
+
+
+def _card_entry(entry_reference: str, booking_date: str, **extra) -> dict:
+    return {
+        "entry_reference": entry_reference,
+        "transaction_amount": {"amount": "90.00", "currency": "EUR"},
+        "credit_debit_indicator": "DBIT",
+        "status": "BOOK",
+        "booking_date": booking_date,
+        "transaction_date": "2026-10-20",
+        "remittance_information": ["COMPRA 6466 ANTHROPIC CLAUDE SUB"],
+        **extra,
+    }
+
+
+def test_build_transaction_keys_card_entry_on_its_own_id_not_its_position():
+    """ActivoBank moves an entry along its list (and onto a new statement) between
+    syncs, changing the reference's tail. The same purchase must keep one id."""
+    provider = EnableBankingProvider()
+    refs = [
+        ("126102021341101                                00002", "2026-10-29"),
+        ("126102021341101                                00001", "2026-10-30"),
+        ("126102021341101 00020VIS4544962833527000126110100004", "2026-11-01"),
+        ("126102021341101 00020VIS4544962833527000126110200004", "2026-11-02"),
+    ]
+    ids = {
+        provider._build_transaction("card", _card_entry(ref, booked), "posted", "auto").external_id
+        for ref, booked in refs
+    }
+    assert ids == {"126102021341101"}
+
+
+def test_build_transaction_keeps_separate_card_entries_apart():
+    provider = EnableBankingProvider()
+    purchase = provider._build_transaction(
+        "card", _card_entry("126102021341101                                00001", "2026-10-30"), "posted", "auto"
+    )
+    fee = provider._build_transaction(
+        "card", _card_entry("126102021341102                                00002", "2026-10-30"), "posted", "auto"
+    )
+    assert purchase.external_id != fee.external_id
+
+
+def test_build_transaction_imports_placeholder_card_entry_as_pending():
+    """An entry without its own id yet (all zeros) gets an id that survives the
+    daily booking-date and position changes, and lands as pending."""
+    provider = EnableBankingProvider()
+    first = provider._build_transaction(
+        "card", _card_entry("000000000000001                                00008", "2026-10-30"), "posted", "auto"
+    )
+    later = provider._build_transaction(
+        "card", _card_entry("000000000000001                                00011", "2026-10-31"), "posted", "auto"
+    )
+    assert first.status == later.status == "pending"
+    assert first.external_id == later.external_id
+    assert first.external_id != "000000000000001"
+
+
+def test_build_transaction_keeps_other_entry_references_whole():
+    provider = EnableBankingProvider()
+    raw = _card_entry("2026103032026-10-30-10.12.19.401199", "2026-10-30")
+    txn = provider._build_transaction("checking", raw, "posted", "auto")
+    assert txn.external_id == "2026103032026-10-30-10.12.19.401199"
+    assert txn.status == "posted"
+
+
 # ----- credit-card balance derivation (issue: card shows full limit free) -----
 
 
